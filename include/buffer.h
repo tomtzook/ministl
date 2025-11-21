@@ -3,6 +3,7 @@
 #include "memory.h"
 #include "unique_ptr.h"
 #include "verify.h"
+#include "span.h"
 
 namespace framework {
 
@@ -21,10 +22,15 @@ public:
 
     [[nodiscard]] constexpr size_t size() const;
 
-    template<typename t_>
+    template<typename t_ = uint8_t>
     [[nodiscard]] const t_* data(size_t offset=0) const;
-    template<typename t_>
+    template<typename t_ = uint8_t>
     [[nodiscard]] t_* data(size_t offset=0);
+
+    template<typename t_ = uint8_t>
+    [[nodiscard]] span<const t_> view() const noexcept;
+    template<typename t_ = uint8_t>
+    [[nodiscard]] span<t_> view() noexcept;
 
     static result<buffer_base> create(size_t size);
     static result<buffer_base> copy(const buffer_base&);
@@ -70,6 +76,14 @@ t_* buffer_base<mem_t_>::data(const size_t offset) {
     if (offset * sizeof(t_) >= m_size) { abort("out of buffer range"); }
     return reinterpret_cast<t_*>(_get()) + offset;
 }
+
+template<memory_type mem_t_>
+template<typename t_>
+span<const t_> buffer_base<mem_t_>::view() const noexcept { return {reinterpret_cast<const t_*>(m_ptr.get()), m_size / sizeof(t_)}; }
+
+template<memory_type mem_t_>
+template<typename t_>
+span<t_> buffer_base<mem_t_>::view() noexcept { return {reinterpret_cast<t_*>(m_ptr.get()), m_size / sizeof(t_)}; }
 
 template<memory_type mem_t_>
 result<buffer_base<mem_t_>> buffer_base<mem_t_>::create(const size_t size) {

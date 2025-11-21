@@ -25,6 +25,7 @@ set(SOURCES
         src/crt.cpp
         src/heap.cpp
         src/memory.cpp
+        include/span.h
 
 )
 
