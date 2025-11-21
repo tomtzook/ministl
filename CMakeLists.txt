@@ -17,6 +17,7 @@ set(SOURCES
         include/debug.h
         include/result.h
         include/optional.h
+        include/unique_ptr.h
 )
 
 add_library(minstl STATIC ${SOURCES})
