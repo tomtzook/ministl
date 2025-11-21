@@ -18,6 +18,8 @@ set(SOURCES
         include/result.h
         include/optional.h
         include/unique_ptr.h
+        include/buffer.h
+        include/verify.h
 )
 
 add_library(minstl STATIC ${SOURCES})

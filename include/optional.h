@@ -81,8 +81,8 @@ public:
     [[nodiscard]] constexpr const t_&& value() const &&;
 
 private:
-    const t_& _get() const;
-    t_& _get();
+    [[nodiscard]] const t_& _get() const;
+    [[nodiscard]] t_& _get();
 
     optional_storage<t_> m_storage;
 };

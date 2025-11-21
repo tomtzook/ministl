@@ -133,13 +133,13 @@ result<unique_ptr<t_, deleter_>> unique_ptr<t_, deleter_>::create(args_... args)
 
 template<typename t_, typename deleter_>
 const t_* unique_ptr<t_, deleter_>::_get() const {
-    if (m_ptr == nullptr) { abort(); }
+    if (m_ptr == nullptr) { abort("empty unique_ptr"); }
     return m_ptr;
 }
 
 template<typename t_, typename deleter_>
 t_* unique_ptr<t_, deleter_>::_get() {
-    if (m_ptr == nullptr) { abort(); }
+    if (m_ptr == nullptr) { abort("empty unique_ptr"); }
     return m_ptr;
 }
 

@@ -86,7 +86,7 @@ public:
     // ReSharper disable once CppNonExplicitConvertingConstructor
     constexpr result_base(err<err_t2_>&& value); // NOLINT(*-explicit-constructor)
 
-    explicit operator bool() const;
+    constexpr explicit operator bool() const;
 
     [[nodiscard]] constexpr const value_t_& value() const;
     [[nodiscard]] constexpr const err_t_& error() const;
@@ -116,7 +116,7 @@ public:
     // ReSharper disable once CppNonExplicitConvertingConstructor
     constexpr result_base(err<err_t2_>&& value); // NOLINT(*-explicit-constructor)
 
-    explicit operator bool() const;
+    constexpr explicit operator bool() const;
 
     constexpr const err_t_& error() const;
 
@@ -191,29 +191,29 @@ constexpr result_base<value_t_, err_t_>::result_base(err<err_t2_>&& value)
 {}
 
 template<typename value_t_, typename err_t_>
-result_base<value_t_, err_t_>::operator bool() const { return m_value.has_value(); }
+constexpr result_base<value_t_, err_t_>::operator bool() const { return m_value.has_value(); }
 
 template<typename value_t_, typename err_t_>
 constexpr const value_t_& result_base<value_t_, err_t_>::value() const {
-    if (!m_value) { abort(); }
+    if (!m_value) { abort("result has no value"); }
     return m_value.value();
 }
 
 template<typename value_t_, typename err_t_>
 constexpr const err_t_& result_base<value_t_, err_t_>::error() const {
-    if (!m_err) { abort(); }
+    if (!m_err) { abort("result has no error"); }
     return m_err.value();
 }
 
 template<typename value_t_, typename err_t_>
 constexpr value_t_&& result_base<value_t_, err_t_>::release_value() {
-    if (!m_value) { abort(); }
+    if (!m_value) { abort("result has no value"); }
     return framework::move(*m_value);
 }
 
 template<typename value_t_, typename err_t_>
 constexpr err_t_&& result_base<value_t_, err_t_>::release_error() {
-    if (!m_err) { abort(); }
+    if (!m_err) { abort("result has no error"); }
     return framework::move(*m_err);
 }
 
@@ -239,24 +239,24 @@ constexpr result_base<void, err_t_>::result_base(err<err_t2_>&& value)
 {}
 
 template<typename err_t_>
-result_base<void, err_t_>::operator bool() const {
+constexpr result_base<void, err_t_>::operator bool() const {
     return !m_err.has_value();
 }
 
 template<typename err_t_>
 constexpr const err_t_& result_base<void, err_t_>::error() const {
-    if (!m_err) { abort(); }
+    if (!m_err) { abort("result has no error"); }
     return m_err.value();
 }
 
 template<typename err_t_>
 constexpr void result_base<void, err_t_>::release_value() {
-    if (m_err) { abort(); }
+    if (m_err) { abort("result has no value"); }
 }
 
 template<typename err_t_>
 constexpr err_t_&& result_base<void, err_t_>::release_error() {
-    if (!m_err) { abort(); }
+    if (!m_err) { abort("result has no error"); }
     return framework::move(*m_err);
 }
 
