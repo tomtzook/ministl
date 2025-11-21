@@ -14,12 +14,18 @@
     do {                                \
         auto __status = __VA_ARGS__;    \
         if (!__status) {                \
-            return __status;            \
+            return framework::err(__status); \
         }                               \
     } while (false)
 
 
-#define trace_status(__status, _msg) trace_error("Status{cat=0x%x, code=0x%x}: " _msg, (__status).category(), (__status).code())
+#define trace_status(_msg, ...) \
+    do {                                \
+        auto __status = framework::status(__VA_ARGS__);    \
+        if (!__status) {                \
+            trace_error("Status{cat=0x%x, code=0x%x}: " _msg, (__status).category(), (__status).code());  \
+        }                               \
+    } while (false)
 
 #define trace_result(...)               \
     do {                                \

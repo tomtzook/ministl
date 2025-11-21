@@ -18,7 +18,7 @@ private:
     t_ m_value;
 };
 
-template<trivially_copyable t_>
+template<not_trivially_copyable t_>
 class ok<t_> {
 public:
     explicit constexpr ok(t_&& value);
@@ -47,7 +47,7 @@ private:
     t_ m_value;
 };
 
-template<trivially_copyable t_>
+template<not_trivially_copyable t_>
 class err<t_> {
 public:
     // ReSharper disable once CppNonExplicitConvertingConstructor
@@ -137,12 +137,12 @@ t_ ok<t_>::value() {
     return m_value;
 }
 
-template<trivially_copyable t_>
+template<not_trivially_copyable t_>
 constexpr ok<t_>::ok(t_&& value)
     : m_value(framework::move(value))
 {}
 
-template<trivially_copyable t_>
+template<not_trivially_copyable t_>
 t_&& ok<t_>::value() {
     return framework::move(m_value);
 }
@@ -157,12 +157,12 @@ t_ err<t_>::value() {
     return m_value;
 }
 
-template<trivially_copyable t_>
+template<not_trivially_copyable t_>
 constexpr err<t_>::err(t_&& value)
     : m_value(framework::move(value))
 {}
 
-template<trivially_copyable t_>
+template<not_trivially_copyable t_>
 t_&& err<t_>::value() {
     return framework::move(m_value);
 }

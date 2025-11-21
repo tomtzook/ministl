@@ -21,8 +21,6 @@ set(SOURCES
         include/lock.h
         include/atomic.h
 
-        src/heap.h
-
         src/empty.cpp
         src/crt.cpp
         src/heap.cpp

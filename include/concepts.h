@@ -11,6 +11,9 @@ template<typename t_>
 concept trivially_copyable = is_trivially_copyable_v<t_>;
 
 template<typename t_>
+concept not_trivially_copyable = !is_trivially_copyable_v<t_>;
+
+template<typename t_>
 concept trivially_destructible = is_trivially_destructible_v<t_>;
 
 template<typename t_, typename u_>

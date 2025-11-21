@@ -14,7 +14,8 @@ enum framework_status_codes : status_code_t {
     status_bad_alloc = 1,
     status_bad_arg,
     status_assert_failed,
-    status_unsupported
+    status_unsupported,
+    status_no_space
 };
 
 class status {
@@ -26,6 +27,11 @@ public:
     constexpr status(const status_category_t category, const status_code_t code)
         : m_cat(category)
         , m_code(code)
+    {}
+
+    // ReSharper disable once CppNonExplicitConvertingConstructor
+    constexpr status(const framework_status_codes code) // NOLINT(*-explicit-constructor)
+        : status(status_category_framework, code)
     {}
 
     status& operator=(const status&) = default;
