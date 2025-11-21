@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(minstl
+project(ministl
         LANGUAGES C CXX
         VERSION "1.0.0")
 
@@ -29,12 +29,13 @@ set(SOURCES
 
 )
 
-add_library(minstl STATIC ${SOURCES})
-target_include_directories(minstl
+add_library(ministl STATIC ${SOURCES})
+target_include_directories(ministl
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/minstl>
+        $<INSTALL_INTERFACE:include/ministl>
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_options(minstl PRIVATE -nostdinc++ -fno-exceptions)
-target_link_options(minstl PRIVATE -nostdlib)
+target_compile_options(ministl PRIVATE -nostdinc++ -fno-exceptions)
+target_compile_definitions(ministl PRIVATE __define_types__=1)
+target_link_options(ministl PRIVATE -nostdlib -nolibc -nodefaultlibs)

@@ -1,10 +1,28 @@
 #pragma once
 
 
+#define trace_status(_msg, ...) \
+    do {                                \
+        auto __sts = framework::status(__VA_ARGS__);    \
+        if (!__sts) {                \
+            trace_error("Status{cat=0x%x, code=0x%x}: " _msg, (__sts).category(), (__sts).code());  \
+        }                               \
+    } while (false)
+
+#define trace_result(_msg, ...)               \
+    do {                                \
+        auto& __res = (__VA_ARGS__);    \
+        if (!__res) {                \
+            trace_status(_msg, __res.error());     \
+        }                               \
+    } while (false)
+
+
 #define verify(...)                     \
     ({                                  \
         auto __result = (__VA_ARGS__);  \
         if (!__result) {                \
+            trace_result("error result", __result); \
             return framework::err(__result.release_error()); \
         }                               \
         __result.release_value();       \
@@ -14,24 +32,8 @@
     do {                                \
         auto __status = __VA_ARGS__;    \
         if (!__status) {                \
+            trace_status("error status", __status); \
             return framework::err(__status); \
-        }                               \
-    } while (false)
-
-
-#define trace_status(_msg, ...) \
-    do {                                \
-        auto __status = framework::status(__VA_ARGS__);    \
-        if (!__status) {                \
-            trace_error("Status{cat=0x%x, code=0x%x}: " _msg, (__status).category(), (__status).code());  \
-        }                               \
-    } while (false)
-
-#define trace_result(...)               \
-    do {                                \
-        auto __status = framework::status(__VA_ARGS__);    \
-        if (!__status) {                \
-            trace_status(__status)      \
         }                               \
     } while (false)
 

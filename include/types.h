@@ -1,5 +1,6 @@
 #pragma once
 
+#ifdef __define_types__
 #ifdef __x86_64__
 typedef signed char int8_t;
 typedef signed short int16_t;
@@ -17,8 +18,10 @@ typedef uint64_t uintn_t;
 typedef uint64_t uintptr_t;
 typedef unsigned long int uintmax_t;
 
-typedef unsigned long size_t;
-typedef long ssize_t;
+typedef unsigned long long size_t;
+typedef long long ssize_t;
 #else
 #define "undefined architecture"
 #endif
+#endif
+
