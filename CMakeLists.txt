@@ -9,8 +9,6 @@ set(CMAKE_CXX_STANDARD 20)
 file(GLOB INCLUDE_FILES ${CMAKE_SOURCE_DIR}/include/*.h ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 set(SOURCES
-        src/empty.cpp
-        src/crt.cpp
         include/memory.h
         include/terminate.h
         include/status.h
@@ -20,6 +18,16 @@ set(SOURCES
         include/unique_ptr.h
         include/buffer.h
         include/verify.h
+        include/lock.h
+        include/atomic.h
+
+        src/heap.h
+
+        src/empty.cpp
+        src/crt.cpp
+        src/heap.cpp
+        src/memory.cpp
+
 )
 
 add_library(minstl STATIC ${SOURCES})
@@ -29,5 +37,5 @@ target_include_directories(minstl
         $<INSTALL_INTERFACE:include/minstl>
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_options(minstl PRIVATE -nostdinc++ -fno-exceptions)
 target_link_options(minstl PRIVATE -nostdlib)
-target_compile_options(minstl PRIVATE -nostdinc++)

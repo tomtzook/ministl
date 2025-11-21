@@ -2,6 +2,47 @@
 
 namespace framework {
 
+template<class t_>
+struct remove_reference {
+    using type = t_;
+};
+
+template<class t_>
+struct remove_reference<t_&> {
+    using type = t_;
+};
+
+template<class t_>
+struct remove_reference<t_&&> {
+    using type = t_;
+};
+
+template<typename t_>
+using remove_reference_t  = remove_reference<t_>::type;
+
+template<typename t_>
+struct remove_cv {
+    using type = t_;
+};
+
+template<typename t_>
+struct remove_cv<const t_> {
+    using type = t_;
+};
+
+template<typename t_>
+struct remove_cv<volatile t_> {
+    using type = t_;
+};
+
+template<typename t_>
+struct remove_cv<const volatile t_> {
+    using type = t_;
+};
+
+template<typename t_>
+using remove_cv_t  = remove_cv<t_>::type;
+
 template<class t_, t_ _v>
 struct integral_constant {
     using value_type = t_;
@@ -15,6 +56,48 @@ struct integral_constant {
 
 using true_type = integral_constant<bool, true>;
 using false_type = integral_constant<bool, false>;
+
+template<typename t_>
+struct is_integral_helper : false_type {};
+
+template<>
+struct is_integral_helper<bool> : true_type {};
+
+template<>
+struct is_integral_helper<char> : true_type {};
+
+template<>
+struct is_integral_helper<unsigned char> : true_type {};
+
+template<>
+struct is_integral_helper<short> : true_type {};
+
+template<>
+struct is_integral_helper<unsigned short> : true_type {};
+
+template<>
+struct is_integral_helper<int> : true_type {};
+
+template<>
+struct is_integral_helper<unsigned int> : true_type {};
+
+template<>
+struct is_integral_helper<long> : true_type {};
+
+template<>
+struct is_integral_helper<unsigned long> : true_type {};
+
+template<>
+struct is_integral_helper<long long> : true_type {};
+
+template<>
+struct is_integral_helper<unsigned long long> : true_type {};
+
+template<typename t_>
+struct is_integral : public is_integral_helper<remove_cv_t<t_>> {};
+
+template<typename t_>
+inline constexpr bool is_integral_v = is_integral<t_>::value;
 
 template<class t_, class... _args>
 struct is_trivially_constructible
@@ -46,21 +129,6 @@ struct enable_if<true, t_> {
 
 template<bool _cond, typename t_ = void>
 using enable_if_t = enable_if<_cond, t_>::type;
-
-template<class t_>
-struct remove_reference {
-    using type = t_;
-};
-
-template<class t_>
-struct remove_reference<t_&> {
-    using type = t_;
-};
-
-template<class t_>
-struct remove_reference<t_&&> {
-    using type = t_;
-};
 
 template <typename t_, typename u_>
 inline constexpr bool is_same_v = __is_same(t_, u_);

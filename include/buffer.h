@@ -95,4 +95,8 @@ const uint8_t* buffer_base<mem_t_>::_get() const { return m_ptr.get(); }
 template<memory_type mem_t_>
 uint8_t* buffer_base<mem_t_>::_get() { return m_ptr.get(); }
 
+using data_buffer = buffer_base<memory_type::data>;
+using code_buffer = buffer_base<memory_type::code>;
+using buffer = data_buffer;
+
 }
