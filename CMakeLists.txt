@@ -10,6 +10,13 @@ file(GLOB INCLUDE_FILES ${CMAKE_SOURCE_DIR}/include/*.h ${CMAKE_SOURCE_DIR}/incl
 
 set(SOURCES
         src/empty.cpp
+        src/crt.cpp
+        include/memory.h
+        include/terminate.h
+        include/status.h
+        include/debug.h
+        include/result.h
+        include/optional.h
 )
 
 add_library(minstl STATIC ${SOURCES})
@@ -19,3 +26,5 @@ target_include_directories(minstl
         $<INSTALL_INTERFACE:include/minstl>
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_options(minstl PRIVATE -nostdlib)
+target_compile_options(minstl PRIVATE -nostdinc++)

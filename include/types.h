@@ -17,7 +17,7 @@ typedef uint64_t uintn_t;
 typedef uint64_t uintptr_t;
 typedef unsigned long int uintmax_t;
 
-typedef unsigned long long size_t;
+typedef unsigned long size_t;
 typedef long long ssize_t;
 #else
 #define "undefined architecture"
