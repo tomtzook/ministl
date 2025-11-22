@@ -16,7 +16,8 @@ public:
     static constexpr size_t type_size = sizeof(type);
 
     constexpr span() noexcept = default;
-    constexpr span(const_pointer ptr, const size_t size) noexcept : m_ptr(ptr), m_size(size) {}
+    // ReSharper disable once CppParameterMayBeConst
+    constexpr span(pointer ptr, const size_t size) noexcept : m_ptr(ptr), m_size(size) {}
     constexpr span(const span&) noexcept = default;
     constexpr span(span&&) noexcept = default;
 

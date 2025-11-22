@@ -38,7 +38,8 @@ public:
 
     constexpr unique_ptr() noexcept = default;
     unique_ptr(const unique_ptr&) = delete;
-    constexpr explicit unique_ptr(const_pointer ptr) noexcept : m_ptr(ptr) {}
+    // ReSharper disable once CppParameterMayBeConst
+    constexpr explicit unique_ptr(pointer ptr) noexcept : m_ptr(ptr) {}
     constexpr unique_ptr(unique_ptr&& other) noexcept : m_ptr(other.m_ptr) { other.m_ptr = nullptr; }
     ~unique_ptr() noexcept { reset(); }
 
