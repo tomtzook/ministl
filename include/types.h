@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef __define_types__
+#ifdef _ministl_define_types_
 
 #ifdef __x86_64__
 
@@ -24,21 +24,22 @@ typedef unsigned long int uintmax_t;
 #define "undefined architecture"
 #endif
 
-#if __sizet_type__ == 1
+#else
 
-typedef unsigned long size_t;
-typedef long ssize_t;
-
-#elif __sizet_type == 2
-
-typedef unsigned long long size_t;
-typedef long long ssize_t;
+#include "stdint.h" // NOLINT(*-deprecated-headers)
+#include "stddef.h" // NOLINT(*-deprecated-headers)
 
 #endif
 
-#else
 
-#include "stdint.h"
-#include "stddef.h"
+#if _ministl_size_t_type_ == 1
+
+typedef uint32_t size_t;
+typedef int32_t ssize_t;
+
+#elif _ministl_size_t_type_ == 2
+
+typedef uint64_t size_t;
+typedef int64_t ssize_t;
 
 #endif

@@ -21,11 +21,14 @@ set(SOURCES
         include/lock.h
         include/atomic.h
         include/span.h
+        include/array.h
+        include/intrinsin.h
 
         src/empty.cpp
         src/crt.cpp
         src/heap.cpp
         src/memory.cpp
+        src/intrinsin.cpp
 )
 
 add_library(ministl STATIC ${SOURCES})
@@ -38,11 +41,27 @@ target_include_directories(ministl
 target_compile_options(ministl PRIVATE -nostdinc++ -fno-exceptions)
 target_link_options(ministl PRIVATE -nostdlib -nolibc -nodefaultlibs)
 
-if (DEFINED no_std)
-    target_compile_definitions(ministl PUBLIC __define_types__=1 __sizet_type__=2 __define_crt__=1 __define_intrinsic__=1)
+set(COMPILE_DEFS )
+
+if (DEFINED MINISTL_DEFINE_TYPES)
+    set(COMPILE_DEPS ${COMPILE_DEPS} _ministl_define_types_=1)
 endif ()
 
-if (DEFINED unit_tests)
+if (DEFINED MINISTL_SIZET_SIZE)
+    set(COMPILE_DEPS ${COMPILE_DEPS} _ministl_size_t_type_=${MINISTL_SIZET_SIZE})
+endif ()
+
+if (DEFINED MINISTL_DEFINE_CRT)
+    set(COMPILE_DEPS ${COMPILE_DEPS} _ministl_define_crt_=1)
+endif ()
+
+if (DEFINED MINISTL_DEFINE_INTRINSIC)
+    set(COMPILE_DEPS ${COMPILE_DEPS} _ministl_define_intrinsic_=1)
+endif ()
+
+target_compile_definitions(ministl PUBLIC ${COMPILE_DEPS})
+
+if (DEFINED MINISTL_UNIT_TESTS)
     find_package(GTest REQUIRED)
     enable_testing()
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "intrinsin.h"
 #include "memory.h"
 #include "unique_ptr.h"
 #include "verify.h"
@@ -10,6 +11,15 @@ namespace framework {
 template<memory_type mem_t_>
 class buffer_base {
 public:
+    using type = uint8_t;
+
+    using const_pointer = const type*;
+    using const_reference = const type&;
+    using pointer = type*;
+    using reference = type&;
+
+    static constexpr auto mem_type = mem_t_;
+
     constexpr buffer_base() = default;
     buffer_base(const buffer_base&) = delete;
     buffer_base(buffer_base&&) = default;
@@ -47,10 +57,10 @@ public:
     static result<buffer_base> copy(span<const t_>);
 
 private:
-    [[nodiscard]] const uint8_t* _get() const;
-    [[nodiscard]] uint8_t* _get();
+    [[nodiscard]] const type* _get() const { return m_ptr.get(); }
+    [[nodiscard]] type* _get() { return m_ptr.get(); }
 
-    using ptr_type = unique_ptr<uint8_t, mem_free_deleter<uint8_t>>;
+    using ptr_type = unique_ptr<type, mem_free_deleter<uint8_t>>;
 
     ptr_type m_ptr;
     size_t m_size = 0;
@@ -92,12 +102,12 @@ span<t_> buffer_base<mem_t_>::view() noexcept { return {reinterpret_cast<t_*>(m_
 
 template<memory_type mem_t_>
 void buffer_base<mem_t_>::fill(const uint8_t b) {
-    memset(m_ptr.get(), b, m_size);
+    _ministl_builtin_memset(m_ptr.get(), b, m_size);
 }
 
 template<memory_type mem_t_>
 void buffer_base<mem_t_>::clear() {
-    memset(m_ptr.get(), 0, m_size);
+    _ministl_builtin_memset(m_ptr.get(), 0, m_size);
 }
 
 template<memory_type mem_t_>
@@ -125,7 +135,7 @@ template<memory_type mem_t_>
 template<size_t align_>
 result<buffer_base<mem_t_>> buffer_base<mem_t_>::copy(const buffer_base& other) {
     auto new_buff = verify(create<align_>(other.size()));
-    memcpy(new_buff.data(), other.data(), other.size());
+    _ministl_builtin_memcpy(new_buff.data(), other.data(), other.size());
 
     return framework::move(new_buff);
 }
@@ -134,16 +144,10 @@ template<memory_type mem_t_>
 template<typename t_, size_t align_>
 result<buffer_base<mem_t_>> buffer_base<mem_t_>::copy(span<const t_> data) {
     auto new_buff = verify(create<align_>(data.size_bytes()));
-    memcpy(new_buff.data(), data.data(), data.size_bytes());
+    _ministl_builtin_memcpy(new_buff.data(), data.data(), data.size_bytes());
 
     return framework::move(new_buff);
 }
-
-template<memory_type mem_t_>
-const uint8_t* buffer_base<mem_t_>::_get() const { return m_ptr.get(); }
-
-template<memory_type mem_t_>
-uint8_t* buffer_base<mem_t_>::_get() { return m_ptr.get(); }
 
 
 using data_buffer = buffer_base<memory_type::data>;

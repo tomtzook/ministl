@@ -1,6 +1,8 @@
 
 #include "heap.h"
 
+#include "intrinsin.h"
+
 namespace framework::heap {
 
 heap::heap()
@@ -37,7 +39,7 @@ status heap::realloc(void* old_ptr, const size_t new_size, void*& out_ptr) {
     }
 
     const auto min_size = (old_block->size < new_size) ? old_block->size : new_size;
-    memcpy(new_ptr, old_block->data, min_size);
+    _ministl_builtin_memcpy(new_ptr, old_block->data, min_size);
     free_block(old_block);
 
     out_ptr = new_ptr;
@@ -68,7 +70,7 @@ status heap::malloc_ex(size_t size, bool clear, void*& out_ptr) {
         }
     }
 
-    memset(block->data, 0, block->size);
+    _ministl_builtin_memset(block->data, 0, block->size);
 
     block->in_use = true;
     out_ptr = block->data;

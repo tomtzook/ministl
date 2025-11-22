@@ -1,7 +1,6 @@
 #pragma once
 
-#include <immintrin.h>
-
+#include "intrinsin.h"
 #include "concepts.h"
 #include "atomic.h"
 
@@ -22,7 +21,7 @@ public:
     spin_lock& operator=(const spin_lock&) = delete;
     spin_lock& operator=(spin_lock&&) = default;
 
-    void lock() noexcept { while (m_flag.test_and_set()) { _mm_pause(); } }
+    void lock() noexcept { while (m_flag.test_and_set()) { _ministl_builtin_pause(); } }
     void unlock() noexcept { m_flag.clear(); }
 
 private:

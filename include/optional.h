@@ -49,6 +49,8 @@ struct optional_storage<t_> {
 template<typename t_>
 class optional {
 public:
+    using type = t_;
+
     constexpr optional() = default;
     optional(const optional&) = default;
     optional(optional&&) = default;
