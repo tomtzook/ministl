@@ -47,14 +47,14 @@ public:
     constexpr array& operator=(const array&) noexcept = default;
     constexpr array& operator=(array&&) noexcept = default;
 
-    [[nodiscard]] constexpr const_pointer data(const size_t offset=0) const noexcept { static_assert(offset < size_, "out of array size"); return m_base + offset; }
-    [[nodiscard]] constexpr pointer data(const size_t offset=0) noexcept { static_assert(offset < size_, "out of array size"); return m_base + offset; }
+    [[nodiscard]] constexpr const_pointer data(const size_t offset=0) const noexcept { if (offset >= size_) { abort("out of array size"); } return m_base + offset; }
+    [[nodiscard]] constexpr pointer data(const size_t offset=0) noexcept { if (offset >= size_) { abort("out of array size"); } return m_base + offset; }
     [[nodiscard]] constexpr size_t size() const noexcept { return size_; }
     [[nodiscard]] constexpr size_t size_bytes() const noexcept { return size_ * type_size; }
     [[nodiscard]] constexpr bool empty() const noexcept { return size_ == 0; }
 
-    [[nodiscard]] constexpr const_reference operator[](const size_t i) const noexcept { static_assert(i < size_, "out of array size"); return m_base[i]; }
-    [[nodiscard]] constexpr reference operator[](const size_t i) noexcept { static_assert(i < size_, "out of array size"); return m_base[i]; }
+    [[nodiscard]] constexpr const_reference operator[](const size_t i) const noexcept { if (i >= size_) { abort("out of array size"); } return m_base[i]; }
+    [[nodiscard]] constexpr reference operator[](const size_t i) noexcept { if (i >= size_) { abort("out of array size"); } return m_base[i]; }
 
     [[nodiscard]] constexpr const_span view() const noexcept { return const_span(m_base, size_); }
     [[nodiscard]] constexpr span view() noexcept { return span(m_base, size_); }

@@ -36,7 +36,7 @@ public:
     [[nodiscard]] constexpr reference operator[](const size_t i) noexcept { return m_ptr[i]; }
 
 private:
-    type* m_ptr = nullptr;
+    pointer m_ptr = nullptr;
     size_t m_size = 0;
 };
 
