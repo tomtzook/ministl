@@ -9,6 +9,5 @@
 namespace framework::debug {
 
 void trace_impl(const wchar_t* fmt, ...);
-void deadloop();
 
 }

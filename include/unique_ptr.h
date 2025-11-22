@@ -11,6 +11,20 @@ struct default_deleter {
     }
 };
 
+template<typename t_>
+struct array_deleter {
+    void operator()(const t_* t) const {
+        delete[] t;
+    }
+};
+
+template<typename t_>
+struct mem_free_deleter {
+    void operator()(const t_* t) const {
+        framework::free(t);
+    }
+};
+
 template<typename t_, typename = default_deleter<t_>>
 class unique_ptr {
 public:

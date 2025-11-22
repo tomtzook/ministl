@@ -1,11 +1,14 @@
 #pragma once
 
+#include "type_traits.h"
 #include "crt.h"
 #include "terminate.h"
 
 namespace framework {
 
 struct nullopt_t {};
+
+constexpr nullopt_t nullopt{};
 
 template<typename t_>
 struct optional_storage {
@@ -71,8 +74,8 @@ public:
     constexpr const t_& operator*() const &;
     constexpr t_&& operator*() &&;
     constexpr const t_&& operator*() const &&;
-    constexpr t_& operator->() &;
-    constexpr const t_& operator->() const &;
+    constexpr t_* operator->();
+    constexpr const t_* operator->() const;
 
     [[nodiscard]] constexpr bool has_value() const;
     [[nodiscard]] constexpr t_& value() &;
@@ -114,7 +117,9 @@ optional_storage<t_>::optional_storage()
 
 template<typename t_> requires(is_trivially_destructible_v<t_>)
 // ReSharper disable once CppMemberFunctionMayBeStatic
-void optional_storage<t_>::reset() {}
+void optional_storage<t_>::reset() {
+    has_value = false;
+}
 
 template<typename t_>
 constexpr optional<t_>::optional(nullopt_t)
@@ -172,10 +177,10 @@ template<typename t_>
 constexpr const t_&& optional<t_>::operator*() const && { return framework::move(_get()); }
 
 template<typename t_>
-constexpr t_& optional<t_>::operator->() & { return _get(); }
+constexpr t_* optional<t_>::operator->() { return &_get(); }
 
 template<typename t_>
-constexpr const t_& optional<t_>::operator->() const & { return _get(); }
+constexpr const t_* optional<t_>::operator->() const { return &_get(); }
 
 template<typename t_>
 constexpr bool optional<t_>::has_value() const { return m_storage.has_value; }

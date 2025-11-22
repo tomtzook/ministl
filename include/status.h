@@ -15,7 +15,8 @@ enum framework_status_codes : status_code_t {
     status_bad_arg,
     status_assert_failed,
     status_unsupported,
-    status_no_space
+    status_no_space,
+    status_unimplemented,
 };
 
 class status {

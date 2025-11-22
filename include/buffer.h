@@ -39,13 +39,7 @@ private:
     [[nodiscard]] const uint8_t* _get() const;
     [[nodiscard]] uint8_t* _get();
 
-    struct deleter {
-        void operator()(const uint8_t* t) const {
-            delete[] t;
-        }
-    };
-
-    using ptr_type = unique_ptr<uint8_t, deleter>;
+    using ptr_type = unique_ptr<uint8_t, mem_free_deleter<uint8_t>>;
 
     ptr_type m_ptr;
     size_t m_size = 0;
@@ -87,11 +81,7 @@ span<t_> buffer_base<mem_t_>::view() noexcept { return {reinterpret_cast<t_*>(m_
 
 template<memory_type mem_t_>
 result<buffer_base<mem_t_>> buffer_base<mem_t_>::create(const size_t size) {
-    // ReSharper disable once CppDFAMemoryLeak
-    auto ptr = new uint8_t[size];
-    verify_alloc(ptr);
-
-    // ReSharper disable once CppDFAMemoryLeak
+    auto ptr = verify(framework::allocate(size, mem_t_));
     return buffer_base(ptr, size);
 }
 

@@ -2,6 +2,7 @@
 #include "memory.h"
 #include "crt.h"
 
+#ifdef __define_crt__
 
 void* operator new(const size_t size) {
     return operator new(size, framework::default_alignment);
@@ -49,6 +50,10 @@ void operator delete[](void* memory, std::align_val_t) noexcept {
     operator delete(memory);
 }
 
+#endif
+
+#ifdef __define_intrinsic__
+
 extern "C"
 int memcmp(const void* s1, const void* s2, size_t size) {
     auto* ptr_s1 = static_cast<const uint8_t*>(s1);
@@ -61,10 +66,12 @@ int memcmp(const void* s1, const void* s2, size_t size) {
 }
 
 extern "C"
-void memset(void* dest, const uint8_t value, const size_t size) {
+void* memset(void* dest, const int value, const size_t size) {
     for (int i = 0; i < size; i++) {
         static_cast<uint8_t*>(dest)[i] = value;
     }
+
+    return dest;
 }
 
 extern "C"
@@ -98,3 +105,5 @@ int strcmp(const char* s1, const char* s2) {
     }
     return *reinterpret_cast<const unsigned char*>(s1) - *reinterpret_cast<const unsigned char*>(s2);
 }
+
+#endif

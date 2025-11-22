@@ -36,5 +36,9 @@ typedef long long ssize_t;
 
 #endif
 
-#endif
+#else
 
+#include "stdint.h"
+#include "stddef.h"
+
+#endif

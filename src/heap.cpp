@@ -1,5 +1,5 @@
 
-#include "../include/heap.h"
+#include "heap.h"
 
 namespace framework::heap {
 
@@ -25,7 +25,7 @@ status heap::malloc(const size_t size, void*& out_ptr) {
     return malloc_ex(size, false, out_ptr);
 }
 
-status heap::realloc(void* old_ptr, size_t new_size, void*& out_ptr) {
+status heap::realloc(void* old_ptr, const size_t new_size, void*& out_ptr) {
     auto* old_block = get_block_from_ptr(old_ptr);
     if (old_block == nullptr) {
         return status_bad_arg;
@@ -43,7 +43,7 @@ status heap::realloc(void* old_ptr, size_t new_size, void*& out_ptr) {
     return {};
 }
 
-status heap::calloc(size_t size, void*& out_ptr) {
+status heap::calloc(const size_t size, void*& out_ptr) {
     return malloc_ex(size, true, out_ptr);
 }
 
