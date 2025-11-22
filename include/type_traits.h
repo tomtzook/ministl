@@ -99,6 +99,21 @@ struct is_integral : public is_integral_helper<remove_cv_t<t_>> {};
 template<typename t_>
 inline constexpr bool is_integral_v = is_integral<t_>::value;
 
+template<typename t_>
+struct is_floating_point_helper : false_type {};
+
+template<>
+struct is_floating_point_helper<float> : true_type {};
+
+template<>
+struct is_floating_point_helper<double> : true_type {};
+
+template<typename t_>
+struct is_floating_point : public is_floating_point_helper<remove_cv_t<t_>> {};
+
+template<typename t_>
+inline constexpr bool is_floating_point_v = is_floating_point<t_>::value;
+
 template<class t_, class... _args>
 struct is_trivially_constructible
     : integral_constant<bool, __is_trivially_constructible(t_, _args...)> {};
@@ -132,6 +147,26 @@ using enable_if_t = enable_if<_cond, t_>::type;
 
 template <typename t_, typename u_>
 inline constexpr bool is_same_v = __is_same(t_, u_);
+
+template <typename t_, typename u_>
+inline constexpr bool is_convertible_v = __is_convertible(t_, u_);
+
+template<typename t_>
+struct __declval_protector {
+    static const bool __stop = false;
+};
+
+template<typename t_, typename u_ = t_&&>
+u_ __declval(int);
+
+template<typename t_>
+t_ __declval(long);
+
+template<typename t_>
+auto declval() noexcept -> decltype(__declval<t_>(0)) {
+    static_assert(__declval_protector<t_>::__stop, "declval() must not be used!");
+    return __declval<t_>(0);
+}
 
 template<typename t_, typename t2_>
 constexpr bool is_any_of(t_ first, t2_ second) {

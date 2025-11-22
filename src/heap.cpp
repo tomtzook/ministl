@@ -36,7 +36,8 @@ status heap::realloc(void* old_ptr, const size_t new_size, void*& out_ptr) {
         return status;
     }
 
-    memcpy(new_ptr, old_block->data, old_block->size);
+    const auto min_size = (old_block->size < new_size) ? old_block->size : new_size;
+    memcpy(new_ptr, old_block->data, min_size);
     free_block(old_block);
 
     out_ptr = new_ptr;

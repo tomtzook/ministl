@@ -49,7 +49,8 @@ add_executable(tests
         tests/mock_heap.cpp
         tests/mock_debug.cpp
         tests/mock_terminate.cpp
-        tests/test_optional.cpp)
+        tests/test_optional.cpp
+        tests/test_result.cpp)
 target_link_libraries(tests PRIVATE GTest::gtest_main ministl)
 
 #gtest_discover_tests(tests)

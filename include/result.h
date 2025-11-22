@@ -88,6 +88,9 @@ public:
 
     constexpr explicit operator bool() const;
 
+    [[nodiscard]] constexpr bool is_success() const;
+    [[nodiscard]] constexpr bool is_error() const;
+
     [[nodiscard]] constexpr const value_t_& value() const;
     [[nodiscard]] constexpr const err_t_& error() const;
 
@@ -118,10 +121,13 @@ public:
 
     constexpr explicit operator bool() const;
 
-    constexpr const err_t_& error() const;
+    [[nodiscard]] constexpr bool is_success() const;
+    [[nodiscard]] constexpr bool is_error() const;
+
+    [[nodiscard]] constexpr const err_t_& error() const;
 
     constexpr void release_value();
-    constexpr err_t_&& release_error();
+    [[nodiscard]] constexpr err_t_&& release_error();
 
 private:
     optional<err_t_> m_err;
@@ -194,6 +200,16 @@ template<typename value_t_, typename err_t_>
 constexpr result_base<value_t_, err_t_>::operator bool() const { return m_value.has_value(); }
 
 template<typename value_t_, typename err_t_>
+constexpr bool result_base<value_t_, err_t_>::is_success() const {
+    return m_value.has_value();
+}
+
+template<typename value_t_, typename err_t_>
+constexpr bool result_base<value_t_, err_t_>::is_error() const {
+    return m_err.has_value();
+}
+
+template<typename value_t_, typename err_t_>
 constexpr const value_t_& result_base<value_t_, err_t_>::value() const {
     if (!m_value) { abort("result has no value"); }
     return m_value.value();
@@ -241,6 +257,16 @@ constexpr result_base<void, err_t_>::result_base(err<err_t2_>&& value)
 template<typename err_t_>
 constexpr result_base<void, err_t_>::operator bool() const {
     return !m_err.has_value();
+}
+
+template<typename err_t_>
+constexpr bool result_base<void, err_t_>::is_success() const {
+    return !m_err.has_value();
+}
+
+template<typename err_t_>
+constexpr bool result_base<void, err_t_>::is_error() const {
+    return m_err.has_value();
 }
 
 template<typename err_t_>

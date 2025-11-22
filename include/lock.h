@@ -1,8 +1,9 @@
 #pragma once
 
+#include <immintrin.h>
+
 #include "concepts.h"
 #include "atomic.h"
-#include <immintrin.h>
 
 namespace framework {
 

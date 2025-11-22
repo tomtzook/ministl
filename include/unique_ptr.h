@@ -41,6 +41,8 @@ public:
 
     constexpr explicit operator bool() const;
 
+    unique_ptr& operator=(t_* new_ptr) noexcept;
+
     constexpr t_& operator*() &;
     constexpr const t_& operator*() const &;
     constexpr t_&& operator*() &&;
@@ -48,9 +50,10 @@ public:
     constexpr t_* operator->();
     constexpr const t_* operator->() const;
 
+    [[nodiscard]] constexpr bool has_value() const;
     [[nodiscard]] const t_* get() const;
     [[nodiscard]] t_* get();
-    void reset();
+    void reset(t_* new_ptr = nullptr);
     [[nodiscard]] t_* release();
 
     template<typename... args_>
@@ -93,6 +96,12 @@ template<typename t_, typename deleter_>
 constexpr unique_ptr<t_, deleter_>::operator bool() const { return m_ptr != nullptr; }
 
 template<typename t_, typename deleter_>
+unique_ptr<t_, deleter_>& unique_ptr<t_, deleter_>::operator=(t_* new_ptr) noexcept {
+    reset(new_ptr);
+    return *this;
+}
+
+template<typename t_, typename deleter_>
 constexpr t_& unique_ptr<t_, deleter_>::operator*() & { return *_get(); }
 
 template<typename t_, typename deleter_>
@@ -111,17 +120,22 @@ template<typename t_, typename deleter_>
 constexpr const t_* unique_ptr<t_, deleter_>::operator->() const { return _get(); }
 
 template<typename t_, typename deleter_>
+constexpr bool unique_ptr<t_, deleter_>::has_value() const { return m_ptr != nullptr; }
+
+template<typename t_, typename deleter_>
 const t_* unique_ptr<t_, deleter_>::get() const { return _get(); }
 
 template<typename t_, typename deleter_>
 t_* unique_ptr<t_, deleter_>::get() { return _get(); }
 
 template<typename t_, typename deleter_>
-void unique_ptr<t_, deleter_>::reset() {
+void unique_ptr<t_, deleter_>::reset(t_* new_ptr) {
     if (m_ptr != nullptr) {
         deleter_()(m_ptr);
         m_ptr = nullptr;
     }
+
+    m_ptr = new_ptr;
 }
 
 template<typename t_, typename deleter_>
