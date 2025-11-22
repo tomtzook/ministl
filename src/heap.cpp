@@ -22,6 +22,42 @@ status heap::init(void* memory_region, const size_t region_size) {
 }
 
 status heap::malloc(const size_t size, void*& out_ptr) {
+    return malloc_ex(size, false, out_ptr);
+}
+
+status heap::realloc(void* old_ptr, size_t new_size, void*& out_ptr) {
+    auto* old_block = get_block_from_ptr(old_ptr);
+    if (old_block == nullptr) {
+        return status_bad_arg;
+    }
+
+    void* new_ptr;
+    if (const auto status = malloc_ex(new_size, false, new_ptr); !status) {
+        return status;
+    }
+
+    memcpy(new_ptr, old_block->data, old_block->size);
+    free_block(old_block);
+
+    out_ptr = new_ptr;
+    return {};
+}
+
+status heap::calloc(size_t size, void*& out_ptr) {
+    return malloc_ex(size, true, out_ptr);
+}
+
+status heap::free(const void* ptr) {
+    auto* block = get_block_from_ptr(const_cast<void*>(ptr));
+    if (block == nullptr) {
+        return status_bad_arg;
+    }
+
+    free_block(block);
+    return {};
+}
+
+status heap::malloc_ex(size_t size, bool clear, void*& out_ptr) {
     auto* block = find_block_for_size(size);
     if (block == nullptr) {
         // no block found
@@ -31,19 +67,16 @@ status heap::malloc(const size_t size, void*& out_ptr) {
         }
     }
 
+    memset(block->data, 0, block->size);
+
     block->in_use = true;
     out_ptr = block->data;
+
     return {};
 }
 
-status heap::free(const void* ptr) {
-    auto* block = get_block_from_ptr(const_cast<void*>(ptr));
-    if (block == nullptr) {
-        return status_bad_arg;
-    }
-
+void heap::free_block(block* block) {
     block->in_use = false;
-    return {};
 }
 
 heap::block* heap::create_new_block(const size_t min_size) {

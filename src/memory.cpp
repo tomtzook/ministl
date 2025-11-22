@@ -13,12 +13,15 @@ struct allocation_header_t {
 };
 #pragma pack(pop)
 
-result<void*> allocate(const size_t size, const memory_type type, const size_t alignment) {
-    auto& heap = heap::get_heap(type);
-
+result<void*> allocate(const size_t size, const memory_type type, const size_t alignment, const bool clear) {
     const auto total_size = size + sizeof(allocation_header_t) + alignment - 1;
+
     void* mem = nullptr;
-    verify_status(heap.malloc(total_size, mem));
+    if (clear) {
+        verify_status(heap::calloc(type, total_size, mem));
+    } else {
+        verify_status(heap::malloc(type, total_size, mem));
+    }
 
     void* aligned_mem;
     if (0 != alignment) {
@@ -37,9 +40,7 @@ result<void*> allocate(const size_t size, const memory_type type, const size_t a
 
 void free(const void* ptr) {
     const auto header = reinterpret_cast<allocation_header_t*>(reinterpret_cast<uintptr_t>(ptr) - sizeof(allocation_header_t));
-
-    auto& heap = heap::get_heap(header->type);
-    trace_status("free heap failed", heap.free(reinterpret_cast<const void*>(header->ptr)));
+    trace_status("free heap failed", heap::free(header->type, reinterpret_cast<const void*>(header->ptr)));
 }
 
 }

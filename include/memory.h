@@ -11,7 +11,7 @@ enum class memory_type {
 
 static constexpr size_t default_alignment = 16;
 
-result<void*> allocate(size_t size, memory_type type = memory_type::data, size_t alignment = default_alignment);
+result<void*> allocate(size_t size, memory_type type = memory_type::data, size_t alignment = default_alignment, bool clear = false);
 void free(const void* ptr);
 
 }

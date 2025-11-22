@@ -18,6 +18,8 @@ public:
 
     [[nodiscard]] status init(void* memory_region, size_t region_size);
     [[nodiscard]] status malloc(size_t size, void*& out_ptr);
+    [[nodiscard]] status realloc(void* old_ptr, size_t new_size, void*& out_ptr);
+    [[nodiscard]] status calloc(size_t size, void*& out_ptr);
     status free(const void* ptr);
 
 private:
@@ -32,6 +34,8 @@ private:
         alignas(block_alignment) uint8_t data[];
     };
 
+    [[nodiscard]] status malloc_ex(size_t size, bool clear, void*& out_ptr);
+    void free_block(block* block);
     [[nodiscard]] block* create_new_block(size_t min_size);
     [[nodiscard]] void* request_new_memory(size_t size);
     void insert_block(block* new_block);
@@ -43,6 +47,9 @@ private:
     size_t m_remaining_mem;
 };
 
-extern heap& get_heap(memory_type type);
+[[nodiscard]] extern status malloc(memory_type type, size_t size, void*& out_ptr);
+[[nodiscard]] extern status realloc(memory_type type, void* old_ptr, size_t new_size, void*& out_ptr);
+[[nodiscard]] extern status calloc(memory_type type, size_t size, void*& out_ptr);
+extern status free(memory_type type, const void* ptr);
 
 }

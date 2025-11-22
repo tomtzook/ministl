@@ -37,5 +37,5 @@ target_include_directories(ministl
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_options(ministl PRIVATE -nostdinc++ -fno-exceptions)
-target_compile_definitions(ministl PRIVATE __define_types__=1)
+target_compile_definitions(ministl PRIVATE __define_types__=1 __sizet_type__=1)
 target_link_options(ministl PRIVATE -nostdlib -nolibc -nodefaultlibs)
