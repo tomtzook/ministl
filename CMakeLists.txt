@@ -45,6 +45,8 @@ set(COMPILE_DEFS )
 
 if (DEFINED MINISTL_DEFINE_TYPES)
     set(COMPILE_DEPS ${COMPILE_DEPS} _ministl_define_types_=1)
+elseif (DEFINED MINISTL_TYPES_FROM_STD)
+    set(COMPILE_DEPS ${COMPILE_DEPS} _ministl_define_types_=2)
 endif ()
 
 if (DEFINED MINISTL_SIZET_SIZE)
