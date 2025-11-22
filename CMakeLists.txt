@@ -6,9 +6,6 @@ project(ministl
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(GTest REQUIRED)
-enable_testing()
-
 file(GLOB INCLUDE_FILES ${CMAKE_SOURCE_DIR}/include/*.h ${CMAKE_SOURCE_DIR}/include/*.hpp)
 
 set(SOURCES
@@ -41,16 +38,21 @@ target_include_directories(ministl
 target_compile_options(ministl PRIVATE -nostdinc++ -fno-exceptions)
 target_link_options(ministl PRIVATE -nostdlib -nolibc -nodefaultlibs)
 
-if (DEFINED NOSTD)
+if (DEFINED no_std)
     target_compile_definitions(ministl PUBLIC __define_types__=1 __sizet_type__=2 __define_crt__=1 __define_intrinsic__=1)
 endif ()
 
-add_executable(tests
-        tests/mock_heap.cpp
-        tests/mock_debug.cpp
-        tests/mock_terminate.cpp
-        tests/test_optional.cpp
-        tests/test_result.cpp)
-target_link_libraries(tests PRIVATE GTest::gtest_main ministl)
+if (DEFINED unit_tests)
+    find_package(GTest REQUIRED)
+    enable_testing()
 
-#gtest_discover_tests(tests)
+    add_executable(tests
+            tests/mock_heap.cpp
+            tests/mock_debug.cpp
+            tests/mock_terminate.cpp
+            tests/test_optional.cpp
+            tests/test_result.cpp)
+    target_link_libraries(tests PRIVATE GTest::gtest_main ministl)
+
+    #gtest_discover_tests(tests)
+endif ()
