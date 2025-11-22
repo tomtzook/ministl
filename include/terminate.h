@@ -13,3 +13,6 @@ namespace framework {
         trace_error("abort: " _msg); \
         framework::terminate();      \
     } while (false);
+
+// todo: add stack unwinder
+#define catastrophic_error(_msg) abort(_msg)

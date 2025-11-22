@@ -58,8 +58,8 @@ public:
     constexpr const_pointer operator->() const { return _get(); }
 
     [[nodiscard]] constexpr bool has_value() const noexcept { return m_ptr != nullptr; }
-    [[nodiscard]] const_pointer get() const noexcept { return _get(); }
-    [[nodiscard]] pointer get() noexcept { return _get(); }
+    [[nodiscard]] constexpr const_pointer get() const noexcept { return _get(); }
+    [[nodiscard]] constexpr pointer get() noexcept { return _get(); }
 
     void reset(pointer new_ptr = nullptr);
     [[nodiscard]] pointer release();
@@ -70,8 +70,8 @@ public:
     static result<unique_ptr> create(args_... args);
 
 private:
-    [[nodiscard]] const_pointer _get() const { if (m_ptr == nullptr) { abort("empty unique_ptr"); } return m_ptr; }
-    [[nodiscard]] pointer _get() { if (m_ptr == nullptr) { abort("empty unique_ptr"); } return m_ptr; }
+    [[nodiscard]] constexpr const_pointer _get() const { if (m_ptr == nullptr) { catastrophic_error("empty unique_ptr"); } return m_ptr; }
+    [[nodiscard]] constexpr pointer _get() { if (m_ptr == nullptr) { catastrophic_error("empty unique_ptr"); } return m_ptr; }
 
     pointer m_ptr = nullptr;
 };

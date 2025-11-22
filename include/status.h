@@ -22,8 +22,8 @@ enum framework_status_codes : status_code_t {
 class status {
 public:
     constexpr status() = default;
-    status(const status&) = default;
-    status(status&&) = default;
+    constexpr status(const status&) = default;
+    constexpr status(status&&) = default;
 
     constexpr status(const status_category_t category, const status_code_t code)
         : m_cat(category)
@@ -35,8 +35,8 @@ public:
         : status(status_category_framework, code)
     {}
 
-    status& operator=(const status&) = default;
-    status& operator=(status&&) = default;
+    constexpr status& operator=(const status&) = default;
+    constexpr status& operator=(status&&) = default;
 
     explicit constexpr operator bool() const { return m_code == status_success; }
 

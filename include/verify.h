@@ -46,6 +46,7 @@
     } while (false)
 
 
+// todo: collision with assert from standard lib, only problematic for the tests
 #define assert(_cond, _msg) \
     do {                                \
         const auto _res = (_cond);      \

@@ -15,12 +15,12 @@ struct optional_storage {
     using type = t_;
 
     optional_storage();
-    optional_storage(const optional_storage&) = default;
-    optional_storage(optional_storage&&) = default;
+    constexpr optional_storage(const optional_storage&) = default;
+    constexpr optional_storage(optional_storage&&) = default;
     ~optional_storage();
 
-    optional_storage& operator=(const optional_storage&) = default;
-    optional_storage& operator=(optional_storage&&) = default;
+    constexpr optional_storage& operator=(const optional_storage&) = default;
+    constexpr optional_storage& operator=(optional_storage&&) = default;
 
     void reset();
 
@@ -33,12 +33,12 @@ struct optional_storage<t_> {
     using type = t_;
 
     optional_storage();
-    optional_storage(const optional_storage&) = default;
-    optional_storage(optional_storage&&) = default;
+    constexpr optional_storage(const optional_storage&) = default;
+    constexpr optional_storage(optional_storage&&) = default;
     ~optional_storage() = default;
 
-    optional_storage& operator=(const optional_storage&) = default;
-    optional_storage& operator=(optional_storage&&) = default;
+    constexpr optional_storage& operator=(const optional_storage&) = default;
+    constexpr optional_storage& operator=(optional_storage&&) = default;
 
     void reset();
 
@@ -52,8 +52,8 @@ public:
     using type = t_;
 
     constexpr optional() = default;
-    optional(const optional&) = default;
-    optional(optional&&) = default;
+    constexpr optional(const optional&) = default;
+    constexpr optional(optional&&) = default;
 
     // ReSharper disable once CppNonExplicitConvertingConstructor
     constexpr optional(nullopt_t); // NOLINT(*-explicit-constructor)
@@ -64,8 +64,8 @@ public:
 
     ~optional() = default;
 
-    optional& operator=(const optional&) = default;
-    optional& operator=(optional&&) = default;
+    constexpr optional& operator=(const optional&) = default;
+    constexpr optional& operator=(optional&&) = default;
     optional& operator=(const t_& t);
     optional& operator=(t_&& t);
     optional& operator=(nullopt_t);
@@ -202,7 +202,7 @@ constexpr const t_&& optional<t_>::value() const && { return framework::move(_ge
 template<typename t_>
 const t_& optional<t_>::_get() const {
     if (!m_storage.has_value) {
-        abort("optional empty");
+        catastrophic_error("optional empty");
     }
 
     return m_storage.value;
@@ -211,7 +211,7 @@ const t_& optional<t_>::_get() const {
 template<typename t_>
 t_& optional<t_>::_get() {
     if (!m_storage.has_value) {
-        abort("optional empty");
+        catastrophic_error("optional empty");
     }
 
     return m_storage.value;

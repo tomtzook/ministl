@@ -10,10 +10,10 @@
 namespace framework::debug {
 
 void trace_impl(const wchar_t* fmt, ...) {
-    /*va_list args;
+    va_list args;
     va_start(args, fmt);
     vwprintf(fmt, args);
-    va_end(args);*/
+    va_end(args);
 }
 
 }

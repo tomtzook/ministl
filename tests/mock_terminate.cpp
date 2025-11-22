@@ -4,7 +4,7 @@
 namespace framework {
 
 void terminate() {
-    //std::terminate();
+    std::terminate();
 }
 
 }

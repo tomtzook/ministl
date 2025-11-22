@@ -12,7 +12,6 @@ template<memory_type mem_t_>
 class buffer_base {
 public:
     using type = uint8_t;
-
     using const_pointer = const type*;
     using const_reference = const type&;
     using pointer = type*;
@@ -23,7 +22,7 @@ public:
     constexpr buffer_base() = default;
     buffer_base(const buffer_base&) = delete;
     buffer_base(buffer_base&&) = default;
-    explicit buffer_base(uint8_t* ptr, size_t size);
+    explicit buffer_base(void* ptr, size_t size);
 
     buffer_base& operator=(const buffer_base&) = delete;
     buffer_base& operator=(buffer_base&&) = default;
@@ -37,10 +36,18 @@ public:
     template<typename t_ = uint8_t>
     [[nodiscard]] t_* data(size_t offset=0);
 
+    [[nodiscard]] const_reference operator[](const size_t i) const noexcept { if (i >= m_size) { catastrophic_error("out of buffer size"); } return _get()[i]; }
+    [[nodiscard]] reference operator[](const size_t i) noexcept { if (i >= m_size) { catastrophic_error("out of buffer size"); } return _get()[i]; }
+
     template<typename t_ = uint8_t>
     [[nodiscard]] span<const t_> view() const noexcept;
     template<typename t_ = uint8_t>
     [[nodiscard]] span<t_> view() noexcept;
+
+    template<typename t_ = uint8_t>
+    [[nodiscard]] span<const t_> sub_view(size_t offset, size_t size) const noexcept;
+    template<typename t_ = uint8_t>
+    [[nodiscard]] span<t_> sub_view(size_t offset, size_t size) noexcept;
 
     void fill(uint8_t b);
     void clear();
@@ -49,12 +56,16 @@ public:
     result<> resize(size_t new_size);
 
     template<size_t align_ = default_alignment>
-    static result<buffer_base> create(size_t size);
+    result<buffer_base> copy() const;
     template<size_t align_ = default_alignment>
-    static result<buffer_base> copy(const buffer_base&);
+    result<buffer_base> sub(size_t offset, size_t size) const;
 
+    template<size_t align_ = default_alignment>
+    static result<buffer_base> create(size_t size);
     template<typename t_, size_t align_ = default_alignment>
-    static result<buffer_base> copy(span<const t_>);
+    static result<buffer_base> from(span<t_>);
+    template<typename t_, size_t align_ = default_alignment>
+    static result<buffer_base> from(span<const t_>);
 
 private:
     [[nodiscard]] const type* _get() const { return m_ptr.get(); }
@@ -67,8 +78,8 @@ private:
 };
 
 template<memory_type mem_t_>
-buffer_base<mem_t_>::buffer_base(uint8_t* ptr, const size_t size)
-    : m_ptr(ptr)
+buffer_base<mem_t_>::buffer_base(void* ptr, const size_t size)
+    : m_ptr(static_cast<pointer>(ptr))
     , m_size(size)
 {}
 
@@ -81,14 +92,14 @@ constexpr size_t buffer_base<mem_t_>::size() const { return m_size; }
 template<memory_type mem_t_>
 template<typename t_>
 const t_* buffer_base<mem_t_>::data(const size_t offset) const {
-    if (offset * sizeof(t_) >= m_size) { abort("out of buffer range"); }
+    if (offset * sizeof(t_) >= m_size) { catastrophic_error("out of buffer range"); }
     return reinterpret_cast<const t_*>(_get()) + offset;
 }
 
 template<memory_type mem_t_>
 template<typename t_>
 t_* buffer_base<mem_t_>::data(const size_t offset) {
-    if (offset * sizeof(t_) >= m_size) { abort("out of buffer range"); }
+    if (offset * sizeof(t_) >= m_size) { catastrophic_error("out of buffer range"); }
     return reinterpret_cast<t_*>(_get()) + offset;
 }
 
@@ -99,6 +110,14 @@ span<const t_> buffer_base<mem_t_>::view() const noexcept { return {reinterpret_
 template<memory_type mem_t_>
 template<typename t_>
 span<t_> buffer_base<mem_t_>::view() noexcept { return {reinterpret_cast<t_*>(m_ptr.get()), m_size / sizeof(t_)}; }
+
+template<memory_type mem_t_>
+template<typename t_>
+span<const t_> buffer_base<mem_t_>::sub_view(size_t offset, size_t size) const noexcept { return view<t_>().sub(offset, size); }
+
+template<memory_type mem_t_>
+template<typename t_>
+span<t_> buffer_base<mem_t_>::sub_view(size_t offset, size_t size) noexcept { return view<t_>().sub(offset, size); }
 
 template<memory_type mem_t_>
 void buffer_base<mem_t_>::fill(const uint8_t b) {
@@ -126,27 +145,44 @@ result<> buffer_base<mem_t_>::resize(const size_t new_size) {
 
 template<memory_type mem_t_>
 template<size_t align_>
-result<buffer_base<mem_t_>> buffer_base<mem_t_>::create(const size_t size) {
-    auto ptr = verify(framework::allocate(size, mem_t_, align_));
-    return buffer_base(ptr, size);
+result<buffer_base<mem_t_>> buffer_base<mem_t_>::copy() const {
+    auto new_buff = verify(buffer_base::create<align_>(m_size));
+    _ministl_builtin_memcpy(new_buff.data(), _get(), m_size);
+
+    return framework::ok(framework::move(new_buff));
 }
 
 template<memory_type mem_t_>
 template<size_t align_>
-result<buffer_base<mem_t_>> buffer_base<mem_t_>::copy(const buffer_base& other) {
-    auto new_buff = verify(create<align_>(other.size()));
-    _ministl_builtin_memcpy(new_buff.data(), other.data(), other.size());
+result<buffer_base<mem_t_>> buffer_base<mem_t_>::sub(const size_t offset, const size_t size) const {
+    assert(offset + size <= m_size, "out of buffer range");
+    auto buffer = verify(buffer_base::from<uint8_t, align_>(sub_view(offset, size)));
+    return framework::ok(framework::move(buffer));
+}
 
-    return framework::move(new_buff);
+template<memory_type mem_t_>
+template<size_t align_>
+result<buffer_base<mem_t_>> buffer_base<mem_t_>::create(const size_t size) {
+    auto ptr = verify(framework::allocate(size, mem_t_, align_));
+    return framework::ok(buffer_base(ptr, size));
 }
 
 template<memory_type mem_t_>
 template<typename t_, size_t align_>
-result<buffer_base<mem_t_>> buffer_base<mem_t_>::copy(span<const t_> data) {
-    auto new_buff = verify(create<align_>(data.size_bytes()));
+result<buffer_base<mem_t_>> buffer_base<mem_t_>::from(span<t_> data) {
+    auto new_buff = verify(buffer_base::create<align_>(data.size_bytes()));
     _ministl_builtin_memcpy(new_buff.data(), data.data(), data.size_bytes());
 
-    return framework::move(new_buff);
+    return framework::ok(framework::move(new_buff));
+}
+
+template<memory_type mem_t_>
+template<typename t_, size_t align_>
+result<buffer_base<mem_t_>> buffer_base<mem_t_>::from(span<const t_> data) {
+    auto new_buff = verify(buffer_base::create<align_>(data.size_bytes()));
+    _ministl_builtin_memcpy(new_buff.data(), data.data(), data.size_bytes());
+
+    return framework::ok(framework::move(new_buff));
 }
 
 

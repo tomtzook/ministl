@@ -72,7 +72,9 @@ if (DEFINED MINISTL_UNIT_TESTS)
             tests/mock_debug.cpp
             tests/mock_terminate.cpp
             tests/test_optional.cpp
-            tests/test_result.cpp)
+            tests/test_result.cpp
+            tests/test_buffer.cpp
+            tests/expect.h)
     target_link_libraries(tests PRIVATE GTest::gtest_main ministl)
 
     #gtest_discover_tests(tests)

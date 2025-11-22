@@ -16,11 +16,11 @@ template<typename t_>
 struct base_array<t_, 0> {
     // empty type used instead of t_[0]
     struct type {
-        // Indexing is undefined.
+        // indexing is undefined.
         __attribute__((__always_inline__,__noreturn__))
-        t_& operator[](size_t) const noexcept { abort("array of 0 size access"); }
+        t_& operator[](size_t) const noexcept { catastrophic_error("array of 0 size access"); }
 
-        // Conversion to a pointer produces a null pointer.
+        // conversion to a pointer produces a null pointer.
         __attribute__((__always_inline__))
         constexpr explicit operator t_*() const noexcept { return nullptr; }
     };
@@ -47,14 +47,14 @@ public:
     constexpr array& operator=(const array&) noexcept = default;
     constexpr array& operator=(array&&) noexcept = default;
 
-    [[nodiscard]] constexpr const_pointer data(const size_t offset=0) const noexcept { if (offset >= size_) { abort("out of array size"); } return m_base + offset; }
-    [[nodiscard]] constexpr pointer data(const size_t offset=0) noexcept { if (offset >= size_) { abort("out of array size"); } return m_base + offset; }
+    [[nodiscard]] constexpr const_pointer data(const size_t offset=0) const noexcept { if constexpr (offset >= size_) { catastrophic_error("out of array size"); } return m_base + offset; }
+    [[nodiscard]] constexpr pointer data(const size_t offset=0) noexcept { if constexpr (offset >= size_) { catastrophic_error("out of array size"); } return m_base + offset; }
     [[nodiscard]] constexpr size_t size() const noexcept { return size_; }
     [[nodiscard]] constexpr size_t size_bytes() const noexcept { return size_ * type_size; }
     [[nodiscard]] constexpr bool empty() const noexcept { return size_ == 0; }
 
-    [[nodiscard]] constexpr const_reference operator[](const size_t i) const noexcept { if (i >= size_) { abort("out of array size"); } return m_base[i]; }
-    [[nodiscard]] constexpr reference operator[](const size_t i) noexcept { if (i >= size_) { abort("out of array size"); } return m_base[i]; }
+    [[nodiscard]] constexpr const_reference operator[](const size_t i) const noexcept { if constexpr (i >= size_) { catastrophic_error("out of array size"); } return m_base[i]; }
+    [[nodiscard]] constexpr reference operator[](const size_t i) noexcept { if constexpr (i >= size_) { catastrophic_error("out of array size"); } return m_base[i]; }
 
     [[nodiscard]] constexpr const_span view() const noexcept { return const_span(m_base, size_); }
     [[nodiscard]] constexpr span view() noexcept { return span(m_base, size_); }

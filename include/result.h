@@ -12,7 +12,7 @@ class ok {
 public:
     explicit constexpr ok(t_ value);
 
-    t_ value();
+    constexpr t_ value();
 
 private:
     t_ m_value;
@@ -23,7 +23,7 @@ class ok<t_> {
 public:
     explicit constexpr ok(t_&& value);
 
-    t_&& value();
+    constexpr t_&& value();
 
 private:
     t_ m_value;
@@ -41,7 +41,7 @@ public:
     // ReSharper disable once CppNonExplicitConvertingConstructor
     constexpr err(t_ value); // NOLINT(*-explicit-constructor)
 
-    t_ value();
+    constexpr t_ value();
 
 private:
     t_ m_value;
@@ -53,7 +53,7 @@ public:
     // ReSharper disable once CppNonExplicitConvertingConstructor
     constexpr err(t_&& value); // NOLINT(*-explicit-constructor)
 
-    t_&& value();
+    constexpr t_&& value();
 
 private:
     t_ m_value;
@@ -65,7 +65,7 @@ public:
     // ReSharper disable once CppNonExplicitConvertingConstructor
     constexpr err(framework_status_codes value); // NOLINT(*-explicit-constructor)
 
-    status&& value();
+    constexpr status&& value();
 
 private:
     status m_value;
@@ -139,7 +139,7 @@ constexpr ok<t_>::ok(t_ value)
 {}
 
 template<typename t_>
-t_ ok<t_>::value() {
+constexpr t_ ok<t_>::value() {
     return m_value;
 }
 
@@ -149,7 +149,7 @@ constexpr ok<t_>::ok(t_&& value)
 {}
 
 template<not_trivially_copyable t_>
-t_&& ok<t_>::value() {
+constexpr t_&& ok<t_>::value() {
     return framework::move(m_value);
 }
 
@@ -159,7 +159,7 @@ constexpr err<t_>::err(t_ value)
 {}
 
 template<typename t_>
-t_ err<t_>::value() {
+constexpr t_ err<t_>::value() {
     return m_value;
 }
 
@@ -169,13 +169,13 @@ constexpr err<t_>::err(t_&& value)
 {}
 
 template<not_trivially_copyable t_>
-t_&& err<t_>::value() {
+constexpr t_&& err<t_>::value() {
     return framework::move(m_value);
 }
 
 constexpr err<framework_status_codes>::err(const framework_status_codes value) : m_value(status_category_framework, value) {}
 
-inline status&& err<framework_status_codes>::value() { return framework::move(m_value); }
+constexpr status&& err<framework_status_codes>::value() { return move(m_value); }
 
 template<typename value_t_, typename err_t_>
 constexpr result_base<value_t_, err_t_>::result_base(ok_type&& value)
@@ -211,25 +211,25 @@ constexpr bool result_base<value_t_, err_t_>::is_error() const {
 
 template<typename value_t_, typename err_t_>
 constexpr const value_t_& result_base<value_t_, err_t_>::value() const {
-    if (!m_value) { abort("result has no value"); }
+    if (!m_value) { catastrophic_error("result has no value"); }
     return m_value.value();
 }
 
 template<typename value_t_, typename err_t_>
 constexpr const err_t_& result_base<value_t_, err_t_>::error() const {
-    if (!m_err) { abort("result has no error"); }
+    if (!m_err) { catastrophic_error("result has no error"); }
     return m_err.value();
 }
 
 template<typename value_t_, typename err_t_>
 constexpr value_t_&& result_base<value_t_, err_t_>::release_value() {
-    if (!m_value) { abort("result has no value"); }
+    if (!m_value) { catastrophic_error("result has no value"); }
     return framework::move(*m_value);
 }
 
 template<typename value_t_, typename err_t_>
 constexpr err_t_&& result_base<value_t_, err_t_>::release_error() {
-    if (!m_err) { abort("result has no error"); }
+    if (!m_err) { catastrophic_error("result has no error"); }
     return framework::move(*m_err);
 }
 
@@ -271,18 +271,18 @@ constexpr bool result_base<void, err_t_>::is_error() const {
 
 template<typename err_t_>
 constexpr const err_t_& result_base<void, err_t_>::error() const {
-    if (!m_err) { abort("result has no error"); }
+    if (!m_err) { catastrophic_error("result has no error"); }
     return m_err.value();
 }
 
 template<typename err_t_>
 constexpr void result_base<void, err_t_>::release_value() {
-    if (m_err) { abort("result has no value"); }
+    if (m_err) { catastrophic_error("result has no value"); }
 }
 
 template<typename err_t_>
 constexpr err_t_&& result_base<void, err_t_>::release_error() {
-    if (!m_err) { abort("result has no error"); }
+    if (!m_err) { catastrophic_error("result has no error"); }
     return framework::move(*m_err);
 }
 
