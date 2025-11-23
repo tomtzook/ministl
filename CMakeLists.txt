@@ -29,6 +29,8 @@ set(SOURCES
         src/heap.cpp
         src/memory.cpp
         src/intrinsin.cpp
+        src/lock.cpp
+        src/atomic.cpp
 )
 
 add_library(ministl STATIC ${SOURCES})
@@ -68,13 +70,15 @@ if (DEFINED MINISTL_UNIT_TESTS)
     enable_testing()
 
     add_executable(tests
+            tests/expect.h
             tests/mock_heap.cpp
             tests/mock_debug.cpp
             tests/mock_terminate.cpp
             tests/test_optional.cpp
             tests/test_result.cpp
             tests/test_buffer.cpp
-            tests/expect.h)
+            tests/test_atomic.cpp
+            tests/test_lock.cpp)
     target_link_libraries(tests PRIVATE GTest::gtest_main ministl)
 
     #gtest_discover_tests(tests)

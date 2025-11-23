@@ -57,6 +57,35 @@ struct integral_constant {
 using true_type = integral_constant<bool, true>;
 using false_type = integral_constant<bool, false>;
 
+template<typename...>
+using _void_t = void;
+
+template<typename t_, typename = void>
+struct _add_lvalue_reference_helper {
+    using type = t_;
+};
+
+template<typename t_>
+struct _add_lvalue_reference_helper<t_, _void_t<t_&>> {
+    using type = t_&;
+};
+
+template<typename t_>
+using _add_lval_ref_t = _add_lvalue_reference_helper<t_>::type;
+
+template<typename t_, typename = void>
+struct _add_rvalue_reference_helper {
+    using type = t_;
+};
+
+template<typename t_>
+struct _add_rvalue_reference_helper<t_, _void_t<t_&&>> {
+    using type = t_&&;
+};
+
+template<typename t_>
+using _add_rval_ref_t = _add_rvalue_reference_helper<t_>::type;
+
 template<typename t_>
 struct is_integral_helper : false_type {};
 
@@ -94,7 +123,7 @@ template<>
 struct is_integral_helper<unsigned long long> : true_type {};
 
 template<typename t_>
-struct is_integral : public is_integral_helper<remove_cv_t<t_>> {};
+struct is_integral : is_integral_helper<remove_cv_t<t_>> {};
 
 template<typename t_>
 inline constexpr bool is_integral_v = is_integral<t_>::value;
@@ -109,28 +138,32 @@ template<>
 struct is_floating_point_helper<double> : true_type {};
 
 template<typename t_>
-struct is_floating_point : public is_floating_point_helper<remove_cv_t<t_>> {};
+struct is_floating_point : is_floating_point_helper<remove_cv_t<t_>> {};
 
 template<typename t_>
 inline constexpr bool is_floating_point_v = is_floating_point<t_>::value;
 
-template<class t_, class... _args>
-struct is_trivially_constructible
-    : integral_constant<bool, __is_trivially_constructible(t_, _args...)> {};
+template<typename t_, class... _args>
+inline constexpr bool is_constructible_v = __is_constructible(t_, _args...);
+template<typename t_>
+inline constexpr bool is_default_constructible_v = __is_constructible(t_);
+template<typename t_>
+inline constexpr bool is_copy_constructible_v = __is_constructible(t_, _add_lval_ref_t<const t_>);
+template<typename t_>
+inline constexpr bool is_move_constructible_v = __is_constructible(t_, _add_rval_ref_t<t_>);
 
-template<class t_, class... _args>
+template<typename t_, typename u_>
+inline constexpr bool is_assignable_v = __is_assignable(t_, u_);
+template<typename t_>
+inline constexpr bool is_copy_assignable_v = __is_assignable(_add_lval_ref_t<t_>, _add_lval_ref_t<const t_>);
+template<typename t_>
+inline constexpr bool is_move_assignable_v = __is_assignable(_add_lval_ref_t<t_>, _add_rval_ref_t<t_>);
+
+template<typename t_, class... _args>
 inline constexpr bool is_trivially_constructible_v = __is_trivially_constructible(t_, _args...);
-
-template<class t_>
-struct is_trivially_copyable : integral_constant<bool, __is_trivially_copyable(t_)> {};
-
-template<class t_>
+template<typename t_>
 inline constexpr bool is_trivially_copyable_v = __is_trivially_copyable(t_);
-
-template<class t_>
-struct is_trivially_destructible : integral_constant<bool, __is_trivially_destructible(t_)> {};
-
-template<class t_>
+template<typename t_>
 inline constexpr bool is_trivially_destructible_v = __is_trivially_destructible(t_);
 
 template<bool, typename = void>
@@ -152,20 +185,20 @@ template <typename t_, typename u_>
 inline constexpr bool is_convertible_v = __is_convertible(t_, u_);
 
 template<typename t_>
-struct __declval_protector {
-    static const bool __stop = false;
+struct _declval_protector {
+    static const bool _stop = false;
 };
 
 template<typename t_, typename u_ = t_&&>
-u_ __declval(int);
+u_ _declval(int);
 
 template<typename t_>
-t_ __declval(long);
+t_ _declval(long);
 
 template<typename t_>
-auto declval() noexcept -> decltype(__declval<t_>(0)) {
-    static_assert(__declval_protector<t_>::__stop, "declval() must not be used!");
-    return __declval<t_>(0);
+auto declval() noexcept -> decltype(_declval<t_>(0)) {
+    static_assert(_declval_protector<t_>::_stop, "declval() must not be used!");
+    return _declval<t_>(0);
 }
 
 template<typename t_, typename t2_>
