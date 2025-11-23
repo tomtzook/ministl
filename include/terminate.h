@@ -8,11 +8,10 @@ namespace framework {
 
 }
 
-#define abort(_msg) \
+#define _abort(_msg) \
     do {                             \
         trace_error("abort: " _msg); \
         framework::terminate();      \
     } while (false);
 
-// todo: add stack unwinder
-#define catastrophic_error(_msg) abort(_msg)
+#define catastrophic_error(_msg) _abort(_msg)

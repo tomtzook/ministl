@@ -24,7 +24,11 @@ status heap::init(void* memory_region, const size_t region_size) {
 }
 
 status heap::malloc(const size_t size, void*& out_ptr) {
-    return malloc_ex(size, false, out_ptr);
+#ifdef _ministl_heap_clear_
+    return malloc_ex(size, true, 0, out_ptr);
+#else
+    return malloc_ex(size, false, 0, out_ptr);
+#endif
 }
 
 status heap::realloc(void* old_ptr, const size_t new_size, void*& out_ptr) {
@@ -34,7 +38,12 @@ status heap::realloc(void* old_ptr, const size_t new_size, void*& out_ptr) {
     }
 
     void* new_ptr;
-    if (const auto status = malloc_ex(new_size, false, new_ptr); !status) {
+#ifdef _ministl_heap_clear_
+    const auto status = malloc_ex(new_size, true, 0, new_ptr);
+#else
+    const auto status = malloc_ex(new_size, false, 0, new_ptr);
+#endif
+    if (!status) {
         return status;
     }
 
@@ -46,8 +55,8 @@ status heap::realloc(void* old_ptr, const size_t new_size, void*& out_ptr) {
     return {};
 }
 
-status heap::calloc(const size_t size, void*& out_ptr) {
-    return malloc_ex(size, true, out_ptr);
+status heap::calloc(const uint8_t memb, const size_t size, void*& out_ptr) {
+    return malloc_ex(size, true, memb, out_ptr);
 }
 
 status heap::free(const void* ptr) {
@@ -60,7 +69,7 @@ status heap::free(const void* ptr) {
     return {};
 }
 
-status heap::malloc_ex(size_t size, bool clear, void*& out_ptr) {
+status heap::malloc_ex(const size_t size, const bool set, const uint8_t memb, void*& out_ptr) {
     auto* block = find_block_for_size(size);
     if (block == nullptr) {
         // no block found
@@ -70,7 +79,9 @@ status heap::malloc_ex(size_t size, bool clear, void*& out_ptr) {
         }
     }
 
-    _ministl_builtin_memset(block->data, 0, block->size);
+    if (set) {
+        _ministl_builtin_memset(block->data, memb, block->size);
+    }
 
     block->in_use = true;
     out_ptr = block->data;

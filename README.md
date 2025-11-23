@@ -11,11 +11,11 @@ replacements for _libc_/_os_ provided capabilities (like _heap_, _mutex_ and mor
 When using, each project must provide several primitives implemented specifically for the environment
 on which it runs, these are:
 - `framework::terminate`: this function must terminate the program and not return. Can be implemented by rebooting the system,
-    halting the cpu or more.
+    halting the cpu or more. This function should not use any __ministl__ code as it is a global dependency for much of it.
 - `framework::debug::trace_impl`: this function should output debug traces, equivalent for writing into _stdout_ in normal
-    _os_. One example implementation may write on the screen, or to a file.
+    _os_. One example implementation may write on the screen, or to a file. This function should not use any __ministl__ code as it is a global dependency for much of it.
 - `framework::heap::*`: these are the heap allocation functions. One should implement them with the help of the `framework::heap::heap`
-    class. The functions are
+    class. These functions should not use most of __ministl__ code as it is a global dependency for some of it. The functions are
   - `framework::heap::malloc`
   - `framework::heap::realloc`
   - `framework::heap::calloc`

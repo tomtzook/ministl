@@ -36,12 +36,12 @@ static void* original_ptr(void* ptr) {
     return reinterpret_cast<void*>(header->ptr);
 }
 
-result<void*> allocate(const size_t size, const memory_type type, const size_t alignment, const bool clear) {
+result<void*> allocate(const size_t size, const memory_type type, const size_t alignment, const bool set, const uint8_t initial_value) {
     const auto total_size = total_alloc_size(size, alignment);
 
     void* mem = nullptr;
-    if (clear) {
-        verify_status(heap::calloc(type, total_size, mem));
+    if (set) {
+        verify_status(heap::calloc(type, initial_value, total_size, mem));
     } else {
         verify_status(heap::malloc(type, total_size, mem));
     }

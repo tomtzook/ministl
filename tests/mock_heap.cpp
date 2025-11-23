@@ -26,8 +26,8 @@ status realloc(memory_type, void* old_ptr, const size_t new_size, void*& out_ptr
     return {};
 }
 
-status calloc(memory_type, const size_t size, void*& out_ptr) {
-    auto* ptr = ::calloc(0, size);
+status calloc(memory_type, const uint8_t memb, const size_t size, void*& out_ptr) {
+    auto* ptr = ::calloc(memb, size);
     if (!ptr) {
         return framework::status_bad_alloc;
     }
