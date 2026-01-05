@@ -31,6 +31,7 @@ set(SOURCES
         src/intrinsin.cpp
         src/lock.cpp
         src/atomic.cpp
+        include/math.h
 )
 
 add_library(ministl STATIC ${SOURCES})
