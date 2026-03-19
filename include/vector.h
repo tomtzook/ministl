@@ -53,13 +53,12 @@ public:
 
     vector();
     explicit vector(size_t capacity);
+    vector(const vector&) requires(is_copy_constructible_v<t_>);
+    vector(vector&&) noexcept;
     ~vector();
 
-    vector(const vector&) = delete;
-    vector(vector&&) = delete;
-
-    vector& operator=(const vector&) = delete;
-    vector& operator=(vector&&) = delete;
+    vector& operator=(const vector&);
+    vector& operator=(vector&&) noexcept;
 
     [[nodiscard]] size_t size() const;
     [[nodiscard]] size_t capacity() const;
@@ -98,6 +97,9 @@ private:
 
     void shift_elements_right(size_t start_index);
     void shift_elements_left(size_t start_index);
+
+    void copy_elements(const uint8_t* other_data, size_t size, size_t capacity);
+
     void ensure_capacity(size_t capacity);
     void replace_data(uint8_t* new_data);
     void destruct_elements();
@@ -194,9 +196,59 @@ vector<t_>::vector(const size_t capacity)
 {}
 
 template<typename t_>
+vector<t_>::vector(const vector& other) requires(is_copy_constructible_v<t_>)
+    : m_data(nullptr)
+    , m_size(0)
+    , m_capacity(0) {
+    copy_elements(other.m_data, other.m_size, other.m_capacity);
+}
+
+template<typename t_>
+vector<t_>::vector(vector&& other) noexcept
+    : m_data(other.m_data)
+    , m_size(other.m_size)
+    , m_capacity(other.m_capacity) {
+    other.m_data = nullptr;
+    other.m_size = 0;
+    other.m_capacity = 0;
+}
+
+template<typename t_>
 vector<t_>::~vector() {
-    destruct_elements();
-    delete[] m_data;
+    if (m_data != nullptr) {
+        destruct_elements();
+        delete[] m_data;
+    }
+}
+
+template<typename t_>
+vector<t_>::vector& vector<t_>::operator=(const vector& other) {
+    // clear our data first
+    if (m_data != nullptr) {
+        destruct_elements();
+        delete[] m_data;
+    }
+
+    m_data = nullptr;
+    m_size = 0;
+    m_capacity = 0;
+
+    copy_elements(other.m_data, other.m_size, other.m_capacity);
+
+    return *this;
+}
+
+template<typename t_>
+vector<t_>::vector& vector<t_>::operator=(vector&& other) noexcept {
+    m_data = other.m_data;
+    m_size = other.m_size;
+    m_capacity = other.m_capacity;
+
+    other.m_data = nullptr;
+    other.m_size = 0;
+    other.m_capacity = 0;
+
+    return *this;
 }
 
 template<typename t_>
@@ -372,7 +424,7 @@ size_t vector<t_>::find_iterator_index(iterator it) const {
 template<typename t_>
 void vector<t_>::shift_elements_right(const size_t start_index) {
     auto* data_ptr = data();
-    for (int i = m_size - 1; i >= static_cast<int>(start_index); i--) {
+    for (int i = m_size; i >= static_cast<int>(start_index); i--) {
         new (&data_ptr[i]) t_(framework::move(data_ptr[i-1]));
         data_ptr[i-1].~t_();
     }
@@ -384,6 +436,19 @@ void vector<t_>::shift_elements_left(const size_t start_index) {
     for (auto i = start_index; i < m_size - 1; i++) {
         new (&data_ptr[i]) t_(framework::move(data_ptr[i+1]));
         data_ptr[i+1].~t_();
+    }
+}
+
+template<typename t_>
+void vector<t_>::copy_elements(const uint8_t* other_data, const size_t size, const size_t capacity) {
+    m_data = new uint8_t[capacity * sizeof(type)];
+    m_size = size;
+    m_capacity = capacity;
+
+    const auto* this_ptr = data();
+    const auto* other_ptr = reinterpret_cast<const t_*>(other_data);
+    for (size_t i = 0; i < size; i++) {
+        new (&this_ptr[i]) t_(other_ptr[i+1]);
     }
 }
 
