@@ -113,6 +113,37 @@ TEST(TestVector, test_trivial_remove_front_two_elements) {
     EXPECT_EQ(val3.f, 8.0f);
 }
 
+TEST(TestVector, test_trivial_add_front_alread_has) {
+    framework::vector<trivial_dummy_struct> v;
+
+    trivial_dummy_struct s{};
+    s.i = 1;
+    s.f = 2.0f;
+    v.push_back(framework::move(s));
+
+    EXPECT_EQ(v.size(), 1);
+    EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
+
+    auto& val = v[0];
+    EXPECT_EQ(val.i, 1);
+    EXPECT_EQ(val.f, 2.0f);
+
+    trivial_dummy_struct s2{};
+    s2.i = 5;
+    s2.f = 8.0f;
+    v.push_front(framework::move(s2));
+
+    EXPECT_EQ(v.size(), 2);
+    EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
+
+    auto& val2 = v[0];
+    EXPECT_EQ(val2.i, 5);
+    EXPECT_EQ(val2.f, 8.0f);
+    auto& val3 = v[1];
+    EXPECT_EQ(val3.i, 1);
+    EXPECT_EQ(val3.f, 2.0f);
+}
+
 TEST(TestVector, test_trivial_increase_capacity) {
     framework::vector<trivial_dummy_struct> v(1);
 
