@@ -40,5 +40,7 @@ void* memset(void* dest, int value, size_t size);
 void* memcpy(void* dest, const void* src, size_t size);
 size_t strlen(const char* s);
 int strcmp(const char* s1, const char* s2);
+const char* strchr(const char* str, int ch);
+const char* strrchr(const char* str, int ch);
 
 }

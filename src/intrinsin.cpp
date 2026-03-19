@@ -1,7 +1,6 @@
 
 #include "intrinsin.h"
 
-
 namespace framework {
 
 int memcmp(const void* s1, const void* s2, size_t size) {
@@ -49,6 +48,32 @@ int strcmp(const char* s1, const char* s2) {
         ++(s2);
     }
     return *reinterpret_cast<const unsigned char*>(s1) - *reinterpret_cast<const unsigned char*>(s2);
+}
+
+const char* strchr(const char* str, const int ch) {
+    const auto* s = str;
+    while (*s) {
+        if (*s == ch) {
+            return s;
+        }
+
+        ++s;
+    }
+
+    return str;
+}
+
+const char* strrchr(const char* str, const int ch) {
+    const auto* s = str + strlen(str) - 1;
+    while (*s) {
+        if (*s == ch) {
+            return s;
+        }
+
+        --s;
+    }
+
+    return str;
 }
 
 }
