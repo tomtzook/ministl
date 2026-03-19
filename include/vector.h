@@ -84,11 +84,12 @@ public:
 
     void reserve(size_t capacity);
 
-    iterator begin();
-    iterator end();
-
     const_iterator cbegin() const;
     const_iterator cend() const;
+    const_iterator begin() const;
+    const_iterator end() const;
+    iterator begin();
+    iterator end();
 
 private:
     const_pointer data(size_t offset=0) const;
@@ -379,22 +380,32 @@ void vector<t_>::reserve(const size_t capacity) {
 }
 
 template<typename t_>
-vector<t_>::iterator vector<t_>::begin() {
-    return iterator(data());
-}
-
-template<typename t_>
-vector<t_>::iterator vector<t_>::end() {
-    return iterator(data(m_size));
-}
-
-template<typename t_>
 vector<t_>::const_iterator vector<t_>::cbegin() const {
     return iterator(data());
 }
 
 template<typename t_>
 vector<t_>::const_iterator vector<t_>::cend() const {
+    return iterator(data(m_size));
+}
+
+template<typename t_>
+vector<t_>::const_iterator vector<t_>::begin() const {
+    return const_iterator(data());
+}
+
+template<typename t_>
+vector<t_>::const_iterator vector<t_>::end() const {
+    return const_iterator(data(m_size));
+}
+
+template<typename t_>
+vector<t_>::iterator vector<t_>::begin() {
+    return iterator(data());
+}
+
+template<typename t_>
+vector<t_>::iterator vector<t_>::end() {
     return iterator(data(m_size));
 }
 

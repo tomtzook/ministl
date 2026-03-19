@@ -17,6 +17,7 @@ enum framework_status_codes : status_code_t {
     status_unsupported,
     status_no_space,
     status_unimplemented,
+    status_not_found,
 };
 
 class status {
