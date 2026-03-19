@@ -1,12 +1,16 @@
 #pragma once
 
-#include <unique_ptr.h>
+#include "types.h"
+#include "type_traits.h"
+#include "result.h"
 
 namespace framework {
 
 template<typename t_>
 class vector {
 public:
+    static constexpr size_t default_capacity = 16;
+
     using type = t_;
     using pointer = type*;
     using reference = type&;
@@ -60,11 +64,26 @@ public:
     [[nodiscard]] size_t size() const;
     [[nodiscard]] size_t capacity() const;
 
-    [[nodiscard]] const type& operator[](size_t index) const;
-    [[nodiscard]] type& operator[](size_t index);
+    [[nodiscard]] const_reference front() const;
+    [[nodiscard]] reference front();
+    [[nodiscard]] const_reference back() const;
+    [[nodiscard]] reference back();
 
+    [[nodiscard]] const_reference operator[](size_t index) const;
+    [[nodiscard]] reference operator[](size_t index);
+
+    void push_front(const_reference ref) requires(is_copy_constructible_v<t_>);
+    void push_front(type&& ref) requires(is_move_constructible_v<t_>);
+    void pop_front();
     void push_back(const_reference ref) requires(is_copy_constructible_v<t_>);
     void push_back(type&& ref) requires(is_move_constructible_v<t_>);
+    void pop_back();
+
+    void insert(const iterator& it, const_reference ref) requires(is_copy_constructible_v<t_>);
+    void insert(const iterator& it, type&& ref) requires(is_move_constructible_v<t_>);
+    iterator erase(const iterator& it);
+
+    void reserve(size_t capacity);
 
     iterator begin();
     iterator end();
@@ -73,11 +92,12 @@ public:
     const_iterator cend() const;
 
 private:
-    static constexpr size_t default_capacity = 16;
+    const_pointer data(size_t offset=0) const;
+    pointer data(size_t offset=0);
+    size_t find_iterator_index(iterator it) const;
 
-    const_pointer data() const;
-    pointer data();
-
+    void shift_elements_right(size_t start_index);
+    void shift_elements_left(size_t start_index);
     void ensure_capacity(size_t capacity);
     void replace_data(uint8_t* new_data);
     void destruct_elements();
@@ -168,7 +188,7 @@ vector<t_>::vector()
 
 template<typename t_>
 vector<t_>::vector(const size_t capacity)
-    : m_data(new t_[capacity])
+    : m_data(new uint8_t[capacity * sizeof(type)])
     , m_size(0)
     , m_capacity(capacity)
 {}
@@ -190,65 +210,181 @@ size_t vector<t_>::capacity() const {
 }
 
 template<typename t_>
-const vector<t_>::type& vector<t_>::operator[](const size_t index) const {
-    if (index >= m_size) {
-        catastrophic_error("index out of range");
-    }
-
-    return m_data[index];
+vector<t_>::const_reference vector<t_>::front() const {
+    return this->operator[](0);
 }
 
 template<typename t_>
-vector<t_>::type& vector<t_>::operator[](const size_t index) {
+vector<t_>::reference vector<t_>::front() {
+    return this->operator[](0);
+}
+
+template<typename t_>
+vector<t_>::const_reference vector<t_>::back() const {
+    return this->operator[](m_size > 0 ? m_size - 1 : 0);
+}
+
+template<typename t_>
+vector<t_>::reference vector<t_>::back() {
+    return this->operator[](m_size > 0 ? m_size - 1 : 0);
+}
+
+template<typename t_>
+vector<t_>::const_reference vector<t_>::operator[](const size_t index) const {
     if (index >= m_size) {
         catastrophic_error("index out of range");
     }
 
-    return m_data[index];
+    return *data(index);
+}
+
+template<typename t_>
+vector<t_>::reference vector<t_>::operator[](const size_t index) {
+    if (index >= m_size) {
+        catastrophic_error("index out of range");
+    }
+
+    return *data(index);
+}
+
+template<typename t_>
+void vector<t_>::push_front(const_reference ref) requires(is_copy_constructible_v<t_>) {
+    insert(begin(), ref);
+}
+
+template<typename t_>
+void vector<t_>::push_front(type&& ref) requires(is_move_constructible_v<t_>) {
+    insert(begin(), framework::move(ref));
+}
+
+template<typename t_>
+void vector<t_>::pop_front() {
+    if (m_size < 1) {
+        return;
+    }
+
+    erase(begin());
 }
 
 template<typename t_>
 void vector<t_>::push_back(const_reference ref) requires(is_copy_constructible_v<t_>) {
-    ensure_capacity(m_size + 1);
-    new (&data()[m_size]) t_(ref);
-    m_size++;
+    insert(end(), ref);
 }
 
 template<typename t_>
 void vector<t_>::push_back(type&& ref) requires(is_move_constructible_v<t_>) {
+    insert(end(), framework::move(ref));
+}
+
+template<typename t_>
+void vector<t_>::pop_back() {
+    if (m_size < 1) {
+        return;
+    }
+
+    auto it = --end();
+    erase(it);
+}
+
+template<typename t_>
+void vector<t_>::insert(const iterator& it, const_reference ref) requires(is_copy_constructible_v<t_>) {
+    const auto index = find_iterator_index(it);
     ensure_capacity(m_size + 1);
-    new (&data()[m_size]) t_(framework::move(ref));
+    shift_elements_right(index);
+
+    new (data(index)) t_(ref);
     m_size++;
 }
 
 template<typename t_>
+void vector<t_>::insert(const iterator& it, type&& ref) requires(is_move_constructible_v<t_>) {
+    const auto index = find_iterator_index(it);
+    ensure_capacity(m_size + 1);
+    shift_elements_right(index);
+
+    new (data(index)) t_(framework::move(ref));
+    m_size++;
+}
+
+template<typename t_>
+vector<t_>::iterator vector<t_>::erase(const iterator& it) {
+    if (m_size < 1) {
+        return end();
+    }
+
+    const auto index = find_iterator_index(it);
+
+    data()[index].~t_();
+    shift_elements_left(index);
+    m_size--;
+
+    return iterator(data(index));
+}
+
+template<typename t_>
+void vector<t_>::reserve(const size_t capacity) {
+    ensure_capacity(capacity);
+}
+
+template<typename t_>
 vector<t_>::iterator vector<t_>::begin() {
-    return iterator(&data()[0]);
+    return iterator(data());
 }
 
 template<typename t_>
 vector<t_>::iterator vector<t_>::end() {
-    return iterator(&data()[m_size]);
+    return iterator(data(m_size));
 }
 
 template<typename t_>
 vector<t_>::const_iterator vector<t_>::cbegin() const {
-    return iterator(&data()[0]);
+    return iterator(data());
 }
 
 template<typename t_>
 vector<t_>::const_iterator vector<t_>::cend() const {
-    return iterator(&data()[m_size]);
+    return iterator(data(m_size));
 }
 
 template<typename t_>
-vector<t_>::const_pointer vector<t_>::data() const {
-    return static_cast<const_pointer>(m_data);
+vector<t_>::const_pointer vector<t_>::data(const size_t offset) const {
+    return reinterpret_cast<const_pointer>(m_data) + offset;
 }
 
 template<typename t_>
-vector<t_>::pointer vector<t_>::data() {
-    return static_cast<pointer>(m_data);
+vector<t_>::pointer vector<t_>::data(const size_t offset) {
+    return reinterpret_cast<pointer>(m_data) + offset;
+}
+
+template<typename t_>
+size_t vector<t_>::find_iterator_index(iterator it) const {
+    const auto* ptr = it.operator->();
+
+    const auto* data_start = data();
+    const auto* data_end = data(m_size);
+    if (ptr < data_start || ptr > data_end) {
+        catastrophic_error("bad iterator");
+    }
+
+    return ptr - data_start;
+}
+
+template<typename t_>
+void vector<t_>::shift_elements_right(const size_t start_index) {
+    auto* data_ptr = data();
+    for (int i = m_size - 1; i >= static_cast<int>(start_index); i--) {
+        new (&data_ptr[i]) t_(framework::move(data_ptr[i-1]));
+        data_ptr[i-1].~t_();
+    }
+}
+
+template<typename t_>
+void vector<t_>::shift_elements_left(const size_t start_index) {
+    auto* data_ptr = data();
+    for (auto i = start_index; i < m_size - 1; i++) {
+        new (&data_ptr[i]) t_(framework::move(data_ptr[i+1]));
+        data_ptr[i+1].~t_();
+    }
 }
 
 template<typename t_>
@@ -258,8 +394,8 @@ void vector<t_>::ensure_capacity(const size_t capacity) {
     }
 
     if constexpr (is_move_constructible_v<t_>) {
-        const auto* old_data = data();
-        const auto* new_memory = new t_[capacity];
+        auto* old_data = data();
+        auto* new_memory = new uint8_t[capacity * sizeof(type)];
 
         for (size_t i = 0; i < m_size; i++) {
             new (&new_memory[i]) t_(framework::move(old_data[i]));

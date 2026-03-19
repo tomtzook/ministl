@@ -80,7 +80,8 @@ if (DEFINED MINISTL_UNIT_TESTS)
             tests/test_result.cpp
             tests/test_buffer.cpp
             tests/test_atomic.cpp
-            tests/test_lock.cpp)
+            tests/test_lock.cpp
+            tests/test_vector.cpp)
     target_link_libraries(tests PRIVATE GTest::gtest_main ministl)
 
     #gtest_discover_tests(tests)
