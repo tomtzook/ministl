@@ -223,7 +223,7 @@ vector<t_>::~vector() {
 }
 
 template<typename t_>
-vector<t_>::vector& vector<t_>::operator=(const vector& other) {
+vector<t_>& vector<t_>::operator=(const vector& other) {
     // clear our data first
     if (m_data != nullptr) {
         destruct_elements();
@@ -240,7 +240,7 @@ vector<t_>::vector& vector<t_>::operator=(const vector& other) {
 }
 
 template<typename t_>
-vector<t_>::vector& vector<t_>::operator=(vector&& other) noexcept {
+vector<t_>& vector<t_>::operator=(vector&& other) noexcept {
     m_data = other.m_data;
     m_size = other.m_size;
     m_capacity = other.m_capacity;
