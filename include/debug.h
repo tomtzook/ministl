@@ -1,6 +1,6 @@
 #pragma once
 
-
+// %a for ascii string
 #define trace(fmt, ...) framework::debug::trace_impl(fmt L"\n", ##__VA_ARGS__)
 
 #define trace_debug(fmt, ...) trace(L"[DEBUG] " fmt, ##__VA_ARGS__)

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "intrinsin.h"
 #include "concepts.h"
 #include "atomic.h"
 
