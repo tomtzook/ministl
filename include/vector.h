@@ -1,8 +1,8 @@
 #pragma once
 
-#include "types.h"
 #include "type_traits.h"
 #include "result.h"
+#include "math.h"
 
 namespace framework {
 
@@ -101,7 +101,7 @@ private:
 
     void copy_elements(const uint8_t* other_data, size_t size, size_t capacity);
 
-    void ensure_capacity(size_t capacity);
+    void ensure_capacity(size_t capacity, bool expand_exact=true);
     void replace_data(uint8_t* new_data);
     void destruct_elements();
 
@@ -376,7 +376,7 @@ vector<t_>::iterator vector<t_>::erase(const iterator& it) {
 
 template<typename t_>
 void vector<t_>::reserve(const size_t capacity) {
-    ensure_capacity(capacity);
+    ensure_capacity(capacity, true);
 }
 
 template<typename t_>
@@ -464,21 +464,25 @@ void vector<t_>::copy_elements(const uint8_t* other_data, const size_t size, con
 }
 
 template<typename t_>
-void vector<t_>::ensure_capacity(const size_t capacity) {
+void vector<t_>::ensure_capacity(const size_t capacity, const bool expand_exact) {
     if (m_capacity >= capacity) {
         return;
     }
 
+    trace_debug("Ensure capacity");
+
+    const auto new_capacity = expand_exact ? capacity : max(capacity, m_capacity * 2);
+
     if constexpr (is_move_constructible_v<t_>) {
         auto* old_data = data();
-        auto* new_memory = new uint8_t[capacity * sizeof(type)];
+        auto* new_memory = new uint8_t[new_capacity * sizeof(type)];
 
         for (size_t i = 0; i < m_size; i++) {
             new (&new_memory[i]) t_(framework::move(old_data[i]));
         }
 
         replace_data(new_memory);
-        m_capacity = capacity;
+        m_capacity = new_capacity;
     } else {
         static_assert(false, "vector element type must be move constructible");
     }
