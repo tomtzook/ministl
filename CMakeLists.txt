@@ -33,6 +33,7 @@ set(SOURCES
         src/atomic.cpp
         include/math.h
         include/vector.h
+        include/string.h
 )
 
 add_library(ministl STATIC ${SOURCES})

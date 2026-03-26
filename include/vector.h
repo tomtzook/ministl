@@ -52,12 +52,11 @@ public:
     };
 
     vector();
-    explicit vector(size_t capacity);
-    vector(const vector&) requires(is_copy_constructible_v<t_>);
+    vector(const vector&) = delete;
     vector(vector&&) noexcept;
     ~vector();
 
-    vector& operator=(const vector&);
+    vector& operator=(const vector&) = delete;
     vector& operator=(vector&&) noexcept;
 
     [[nodiscard]] size_t size() const;
@@ -71,18 +70,20 @@ public:
     [[nodiscard]] const_reference operator[](size_t index) const;
     [[nodiscard]] reference operator[](size_t index);
 
-    void push_front(const_reference ref) requires(is_copy_constructible_v<t_>);
-    void push_front(type&& ref) requires(is_move_constructible_v<t_>);
-    void pop_front();
-    void push_back(const_reference ref) requires(is_copy_constructible_v<t_>);
-    void push_back(type&& ref) requires(is_move_constructible_v<t_>);
-    void pop_back();
+    result<> push_front(const_reference ref) requires(is_copy_constructible_v<t_>);
+    result<> push_front(type&& ref) requires(is_move_constructible_v<t_>);
+    result<> pop_front();
+    result<> push_back(const_reference ref) requires(is_copy_constructible_v<t_>);
+    result<> push_back(type&& ref) requires(is_move_constructible_v<t_>);
+    result<> pop_back();
 
-    void insert(const iterator& it, const_reference ref) requires(is_copy_constructible_v<t_>);
-    void insert(const iterator& it, type&& ref) requires(is_move_constructible_v<t_>);
-    iterator erase(const iterator& it);
+    result<iterator> insert(const iterator& it, const_reference ref) requires(is_copy_constructible_v<t_>);
+    result<iterator> insert(const iterator& it, type&& ref) requires(is_move_constructible_v<t_>);
+    result<iterator> erase(const iterator& it);
 
-    void reserve(size_t capacity);
+    result<> reserve(size_t capacity);
+    result<> copy(const vector& other);
+    result<> clear();
 
     const_iterator cbegin() const;
     const_iterator cend() const;
@@ -90,6 +91,9 @@ public:
     const_iterator end() const;
     iterator begin();
     iterator end();
+
+    static result<vector> create(size_t capacity=default_capacity);
+    static result<vector> copy(const vector&) requires(is_copy_constructible_v<t_>);
 
 private:
     const_pointer data(size_t offset=0) const;
@@ -99,9 +103,11 @@ private:
     void shift_elements_right(size_t start_index);
     void shift_elements_left(size_t start_index);
 
-    void copy_elements(const uint8_t* other_data, size_t size, size_t capacity);
+    result<> create_elements(size_t capacity);
+    result<> copy_elements(const uint8_t* other_data, size_t size);
 
-    void ensure_capacity(size_t capacity, bool expand_exact=true);
+    result<> ensure_allocated();
+    result<> ensure_capacity(size_t capacity, bool expand_exact=true);
     void replace_data(uint8_t* new_data);
     void destruct_elements();
 
@@ -186,23 +192,10 @@ bool vector<t_>::const_iterator::operator!=(const const_iterator& rhs) const {
 
 template<typename t_>
 vector<t_>::vector()
-    : vector(default_capacity)
-{}
-
-template<typename t_>
-vector<t_>::vector(const size_t capacity)
-    : m_data(new uint8_t[capacity * sizeof(type)])
-    , m_size(0)
-    , m_capacity(capacity)
-{}
-
-template<typename t_>
-vector<t_>::vector(const vector& other) requires(is_copy_constructible_v<t_>)
     : m_data(nullptr)
     , m_size(0)
-    , m_capacity(0) {
-    copy_elements(other.m_data, other.m_size, other.m_capacity);
-}
+    , m_capacity(0)
+{}
 
 template<typename t_>
 vector<t_>::vector(vector&& other) noexcept
@@ -220,23 +213,6 @@ vector<t_>::~vector() {
         destruct_elements();
         delete[] m_data;
     }
-}
-
-template<typename t_>
-vector<t_>& vector<t_>::operator=(const vector& other) {
-    // clear our data first
-    if (m_data != nullptr) {
-        destruct_elements();
-        delete[] m_data;
-    }
-
-    m_data = nullptr;
-    m_size = 0;
-    m_capacity = 0;
-
-    copy_elements(other.m_data, other.m_size, other.m_capacity);
-
-    return *this;
 }
 
 template<typename t_>
@@ -301,68 +277,88 @@ vector<t_>::reference vector<t_>::operator[](const size_t index) {
 }
 
 template<typename t_>
-void vector<t_>::push_front(const_reference ref) requires(is_copy_constructible_v<t_>) {
-    insert(begin(), ref);
+result<> vector<t_>::push_front(const_reference ref) requires(is_copy_constructible_v<t_>) {
+    verify(ensure_allocated());
+    verify(insert(begin(), ref));
+    return {};
 }
 
 template<typename t_>
-void vector<t_>::push_front(type&& ref) requires(is_move_constructible_v<t_>) {
-    insert(begin(), framework::move(ref));
+result<> vector<t_>::push_front(type&& ref) requires(is_move_constructible_v<t_>) {
+    verify(ensure_allocated());
+    verify(insert(begin(), framework::move(ref)));
+    return {};
 }
 
 template<typename t_>
-void vector<t_>::pop_front() {
+result<> vector<t_>::pop_front() {
     if (m_size < 1) {
-        return;
+        return {};
     }
 
-    erase(begin());
+    verify(ensure_allocated());
+    return erase(begin());
 }
 
 template<typename t_>
-void vector<t_>::push_back(const_reference ref) requires(is_copy_constructible_v<t_>) {
-    insert(end(), ref);
+result<> vector<t_>::push_back(const_reference ref) requires(is_copy_constructible_v<t_>) {
+    verify(ensure_allocated());
+    verify(insert(end(), ref));
+    return {};
 }
 
 template<typename t_>
-void vector<t_>::push_back(type&& ref) requires(is_move_constructible_v<t_>) {
-    insert(end(), framework::move(ref));
+result<> vector<t_>::push_back(type&& ref) requires(is_move_constructible_v<t_>) {
+    verify(ensure_allocated());
+    verify(insert(end(), framework::move(ref)));
+    return {};
 }
 
 template<typename t_>
-void vector<t_>::pop_back() {
+result<> vector<t_>::pop_back() {
     if (m_size < 1) {
-        return;
+        return {};
     }
 
+    verify(ensure_allocated());
     auto it = --end();
-    erase(it);
+    return erase(it);
 }
 
 template<typename t_>
-void vector<t_>::insert(const iterator& it, const_reference ref) requires(is_copy_constructible_v<t_>) {
+result<typename vector<t_>::iterator> vector<t_>::insert(const iterator& it, const_reference ref) requires(is_copy_constructible_v<t_>) {
+    verify(ensure_allocated());
+
     const auto index = find_iterator_index(it);
-    ensure_capacity(m_size + 1);
+    verify(ensure_capacity(m_size + 1));
     shift_elements_right(index);
 
     new (data(index)) t_(ref);
     m_size++;
+
+    return ok(iterator(data(index)));
 }
 
 template<typename t_>
-void vector<t_>::insert(const iterator& it, type&& ref) requires(is_move_constructible_v<t_>) {
+result<typename vector<t_>::iterator> vector<t_>::insert(const iterator& it, type&& ref) requires(is_move_constructible_v<t_>) {
+    verify(ensure_allocated());
+
     const auto index = find_iterator_index(it);
-    ensure_capacity(m_size + 1);
+    verify(ensure_capacity(m_size + 1));
     shift_elements_right(index);
 
     new (data(index)) t_(framework::move(ref));
     m_size++;
+
+    return ok(iterator(data(index)));
 }
 
 template<typename t_>
-vector<t_>::iterator vector<t_>::erase(const iterator& it) {
+result<typename vector<t_>::iterator> vector<t_>::erase(const iterator& it) {
+    verify(ensure_allocated());
+
     if (m_size < 1) {
-        return end();
+        return ok(end());
     }
 
     const auto index = find_iterator_index(it);
@@ -371,12 +367,23 @@ vector<t_>::iterator vector<t_>::erase(const iterator& it) {
     shift_elements_left(index);
     m_size--;
 
-    return iterator(data(index));
+    return ok(iterator(data(index)));
 }
 
 template<typename t_>
-void vector<t_>::reserve(const size_t capacity) {
-    ensure_capacity(capacity, true);
+result<> vector<t_>::reserve(const size_t capacity) {
+    return ensure_capacity(capacity, true);
+}
+
+template<typename t_>
+result<> vector<t_>::copy(const vector& other) {
+    return copy_elements(other.m_data, other.m_size);
+}
+
+template<typename t_>
+result<> vector<t_>::clear() {
+    destruct_elements();
+    return {};
 }
 
 template<typename t_>
@@ -407,6 +414,20 @@ vector<t_>::iterator vector<t_>::begin() {
 template<typename t_>
 vector<t_>::iterator vector<t_>::end() {
     return iterator(data(m_size));
+}
+
+template<typename t_>
+result<vector<t_>> vector<t_>::create(const size_t capacity) {
+    vector vec;
+    verify(vec.create_elements(capacity));
+    return ok(move(vec));
+}
+
+template<typename t_>
+result<vector<t_>> vector<t_>::copy(const vector& other) requires(is_copy_constructible_v<t_>) {
+    auto vec = verify(create(other.m_capacity));
+    verify(vec.copy_elements(other.m_data, other.m_size));
+    return ok(move(vec));
 }
 
 template<typename t_>
@@ -451,31 +472,54 @@ void vector<t_>::shift_elements_left(const size_t start_index) {
 }
 
 template<typename t_>
-void vector<t_>::copy_elements(const uint8_t* other_data, const size_t size, const size_t capacity) {
+result<> vector<t_>::create_elements(const size_t capacity) {
     m_data = new uint8_t[capacity * sizeof(type)];
-    m_size = size;
+    verify_alloc(m_data);
+
+    m_size = 0;
     m_capacity = capacity;
+
+    return {};
+}
+
+template<typename t_>
+result<> vector<t_>::copy_elements(const uint8_t* other_data, const size_t size) {
+    destruct_elements();
+
+    verify(ensure_capacity(size));
+    m_size = 0;
 
     const auto* this_ptr = data();
     const auto* other_ptr = reinterpret_cast<const t_*>(other_data);
     for (size_t i = 0; i < size; i++) {
         new (&this_ptr[i]) t_(other_ptr[i+1]);
+        m_size++;
     }
+
+    return {};
 }
 
 template<typename t_>
-void vector<t_>::ensure_capacity(const size_t capacity, const bool expand_exact) {
-    if (m_capacity >= capacity) {
-        return;
+result<> vector<t_>::ensure_allocated() {
+    if (m_data) {
+        return {};
     }
 
-    trace_debug("Ensure capacity");
+    return create_elements(default_capacity);
+}
+
+template<typename t_>
+result<> vector<t_>::ensure_capacity(const size_t capacity, const bool expand_exact) {
+    if (m_capacity >= capacity) {
+        return {};
+    }
 
     const auto new_capacity = expand_exact ? capacity : max(capacity, m_capacity * 2);
 
     if constexpr (is_move_constructible_v<t_>) {
         auto* old_data = data();
         auto* new_memory = new uint8_t[new_capacity * sizeof(type)];
+        verify_alloc(new_memory);
 
         for (size_t i = 0; i < m_size; i++) {
             new (&new_memory[i]) t_(framework::move(old_data[i]));
@@ -487,6 +531,7 @@ void vector<t_>::ensure_capacity(const size_t capacity, const bool expand_exact)
         static_assert(false, "vector element type must be move constructible");
     }
 
+    return {};
 }
 
 template<typename t_>
@@ -505,6 +550,7 @@ void vector<t_>::destruct_elements() {
     for (size_t i = 0; i < m_size; i++) {
         data_ptr[i].~t_();
     }
+    m_size = 0;
 }
 
 }
