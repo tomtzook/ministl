@@ -5,6 +5,7 @@
 #include "type_traits.h"
 #include "result.h"
 #include "verify.h"
+#include "iterator.h"
 
 namespace framework {
 
@@ -18,6 +19,8 @@ template<char_type t_>
 class string_view_base {
 public:
     using type = t_;
+    using iterator = random_access_iterator<type>;
+    using const_iterator = const_random_access_iterator<type>;
 
     string_view_base();
     // ReSharper disable once CppNonExplicitConvertingConstructor
@@ -32,6 +35,13 @@ public:
     string_view_base& operator=(const string_view_base&);
     string_view_base& operator=(string_view_base&&) noexcept;
 
+    const_iterator cbegin() const;
+    const_iterator begin() const;
+    iterator begin();
+    const_iterator cend() const;
+    const_iterator end() const;
+    iterator end();
+
     [[nodiscard]] size_t length() const;
     [[nodiscard]] const type* data() const;
     [[nodiscard]] type* data();
@@ -45,6 +55,8 @@ template<char_type t_>
 class string_base {
 public:
     using type = t_;
+    using iterator = random_access_iterator<type>;
+    using const_iterator = const_random_access_iterator<type>;
     static constexpr size_t npos = static_cast<size_t>(-1);
 
     string_base();
@@ -65,7 +77,15 @@ public:
     [[nodiscard]] bool operator>(const string_base&) const;
     [[nodiscard]] bool operator<(const string_base&) const;
 
+    // ReSharper disable once CppNonExplicitConversionOperator
     [[nodiscard]] operator bool() const;
+
+    const_iterator cbegin() const;
+    const_iterator begin() const;
+    iterator begin();
+    const_iterator cend() const;
+    const_iterator end() const;
+    iterator end();
 
     size_t find(type ch) const;
     size_t find_last(type ch) const;
@@ -75,21 +95,24 @@ public:
     [[nodiscard]] type* c_str();
 
     [[nodiscard]] result<> set(const type*);
+    [[nodiscard]] result<> set(const type*, size_t, size_t);
     [[nodiscard]] result<> set(const string_view_base<type>&);
     [[nodiscard]] result<> set(const string_base&);
     [[nodiscard]] result<> reserve(size_t);
     void clear();
 
-    [[nodiscard]] result<string_base> substr(size_t start, size_t end) const;
+    [[nodiscard]] result<string_base> substr(size_t start, size_t end=-1) const;
 
     [[nodiscard]] static result<string_base> from(const type*);
+    [[nodiscard]] static result<string_base> from(const type*, size_t, size_t);
     [[nodiscard]] static result<string_base> from(const string_view_base<type>&);
     [[nodiscard]] static result<string_base> from(const string_base&);
 
 private:
-    [[nodiscard]] result<> set(const type*, size_t);
     [[nodiscard]] result<> ensure_capacity(size_t);
     void destroy();
+
+    int compare(const type* s1, const type* s2) const;
 
     type* m_data;
     size_t m_length;
@@ -158,6 +181,36 @@ string_view_base<t_>& string_view_base<t_>::operator=(string_view_base&& other) 
     m_data = other.m_data;
     m_length = other.m_length;
     return *this;
+}
+
+template<char_type t_>
+string_view_base<t_>::const_iterator string_view_base<t_>::cbegin() const {
+    return const_iterator(m_data);
+}
+
+template<char_type t_>
+string_view_base<t_>::const_iterator string_view_base<t_>::begin() const {
+    return const_iterator(m_data);
+}
+
+template<char_type t_>
+string_view_base<t_>::iterator string_view_base<t_>::begin() {
+    return iterator(m_data);
+}
+
+template<char_type t_>
+string_view_base<t_>::const_iterator string_view_base<t_>::cend() const {
+    return const_iterator(m_data != nullptr ? m_data + m_length : nullptr);
+}
+
+template<char_type t_>
+string_view_base<t_>::const_iterator string_view_base<t_>::end() const {
+    return const_iterator(m_data != nullptr ? m_data + m_length : nullptr);
+}
+
+template<char_type t_>
+string_view_base<t_>::iterator string_view_base<t_>::end() {
+    return iterator(m_data != nullptr ? m_data + m_length : nullptr);
 }
 
 template<char_type t_>
@@ -235,37 +288,67 @@ string_base<t_>::type& string_base<t_>::operator[](const size_t index) {
 
 template<char_type t_>
 bool string_base<t_>::operator==(const string_base& other) const {
-    return strcmp(m_data, other.m_data) == 0;
+    return compare(m_data, other.m_data) == 0;
 }
 
 template<char_type t_>
 bool string_base<t_>::operator!=(const string_base& other) const {
-    return strcmp(m_data, other.m_data) != 0;
+    return compare(m_data, other.m_data) != 0;
 }
 
 template<char_type t_>
 bool string_base<t_>::operator>=(const string_base& other) const {
-    return strcmp(m_data, other.m_data) >= 0;
+    return compare(m_data, other.m_data) >= 0;
 }
 
 template<char_type t_>
 bool string_base<t_>::operator<=(const string_base& other) const {
-    return strcmp(m_data, other.m_data) <= 0;
+    return compare(m_data, other.m_data) <= 0;
 }
 
 template<char_type t_>
 bool string_base<t_>::operator>(const string_base& other) const {
-    return strcmp(m_data, other.m_data) > 0;
+    return compare(m_data, other.m_data) > 0;
 }
 
 template<char_type t_>
 bool string_base<t_>::operator<(const string_base& other) const {
-    return strcmp(m_data, other.m_data) < 0;
+    return compare(m_data, other.m_data) < 0;
 }
 
 template<char_type t_>
 string_base<t_>::operator bool() const {
     return m_length > 0;
+}
+
+template<char_type t_>
+string_base<t_>::const_iterator string_base<t_>::cbegin() const {
+    return const_iterator(m_data);
+}
+
+template<char_type t_>
+string_base<t_>::const_iterator string_base<t_>::begin() const {
+    return const_iterator(m_data);
+}
+
+template<char_type t_>
+string_base<t_>::iterator string_base<t_>::begin() {
+    return iterator(m_data);
+}
+
+template<char_type t_>
+string_base<t_>::const_iterator string_base<t_>::cend() const {
+    return const_iterator(m_data != nullptr ? m_data + m_length : nullptr);
+}
+
+template<char_type t_>
+string_base<t_>::const_iterator string_base<t_>::end() const {
+    return const_iterator(m_data != nullptr ? m_data + m_length : nullptr);
+}
+
+template<char_type t_>
+string_base<t_>::iterator string_base<t_>::end() {
+    return iterator(m_data != nullptr ? m_data + m_length : nullptr);
 }
 
 template<char_type t_>
@@ -308,7 +391,23 @@ string_base<t_>::type* string_base<t_>::c_str() {
 template<char_type t_>
 result<> string_base<t_>::set(const type* raw_str) {
     const auto length = strlen(raw_str);
-    return set(raw_str, length);
+    return set(raw_str, 0, length);
+}
+
+template<char_type t_>
+result<> string_base<t_>::set(const type* raw_str, const size_t start, const size_t length) {
+    if (length < 1) {
+        clear();
+        return {};
+    }
+
+    verify(ensure_capacity(length + 1));
+    memcpy(m_data, raw_str + start, length * sizeof(type));
+    m_data[length] = '\0';
+
+    m_length = length;
+
+    return {};
 }
 
 template<char_type t_>
@@ -341,14 +440,16 @@ void string_base<t_>::clear() {
 
 template<char_type t_>
 result<string_base<t_>> string_base<t_>::substr(const size_t start, const size_t end) const {
-    if (start > end) return err(status_bad_arg);
-    if (end > m_length) return err(status_bad_arg);
+    const auto actual_end = end == static_cast<size_t>(-1) ? m_length : end;
 
-    const auto size = end - start;
+    if (start > actual_end) return err(status_bad_arg);
+    if (actual_end > m_length) return err(status_bad_arg);
+
+    const auto size = actual_end - start;
 
     string_base substr;
     verify(substr.reserve(size));
-    memcpy(substr.m_data, m_data + start, size);
+    memcpy(substr.m_data, m_data + start, size * sizeof(type));
     substr.m_length = size;
 
     return ok(move(substr));
@@ -358,6 +459,13 @@ template<char_type t_>
 result<string_base<t_>> string_base<t_>::from(const type* raw_str) {
     string_base str;
     verify(str.set(raw_str));
+    return ok(move(str));
+}
+
+template<char_type t_>
+result<string_base<t_>> string_base<t_>::from(const type* raw_str, const size_t start, const size_t length) {
+    string_base str;
+    verify(str.set(raw_str, start, length));
     return ok(move(str));
 }
 
@@ -376,29 +484,13 @@ result<string_base<t_>> string_base<t_>::from(const string_base& other) {
 }
 
 template<char_type t_>
-result<> string_base<t_>::set(const type* data, const size_t length) {
-    if (length < 1) {
-        clear();
-        return {};
-    }
-
-    verify(ensure_capacity(length + 1));
-    memcpy(m_data, data, length);
-    m_data[length] = '\0';
-
-    m_length = length;
-
-    return {};
-}
-
-template<char_type t_>
 result<> string_base<t_>::ensure_capacity(const size_t capacity) {
     const auto actual_capacity = capacity + 1;
     if (actual_capacity <= inline_storage_size && m_data != m.storage) {
         if (m_data) {
             const auto* last_data = m_data;
             m_data = m.storage;
-            memcmp(m_data, last_data, m_length + 1);
+            memcpy(m_data, last_data, (m_length + 1) * sizeof(type));
 
             delete m_data;
         } else {
@@ -407,6 +499,8 @@ result<> string_base<t_>::ensure_capacity(const size_t capacity) {
     } else if (capacity > m.m_capacity) {
         auto* new_data = new type[actual_capacity];
         verify_alloc(new_data);
+
+        memcpy(new_data, m_data, (m_length + 1) * sizeof(type));
 
         if (m_data && m_data != m.storage) {
             delete m_data;
@@ -433,6 +527,19 @@ void string_base<t_>::destroy() {
         m_length = 0;
         m.m_capacity = 0;
     }
+}
+
+template<char_type t_>
+int string_base<t_>::compare(const type* s1, const type* s2) const {
+    if constexpr (is_same_v<type, char>) {
+        return strcmp(s1, s2);
+    } else if constexpr (is_same_v<type, wchar_t>) {
+        return wcstrcmp(s1, s2);
+    } else {
+        static_assert(false, "unsupported type");
+    }
+
+    return 0;
 }
 
 using string_view = string_view_base<char>;

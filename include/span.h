@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "iterator.h"
 
 namespace framework {
 
@@ -12,6 +13,8 @@ public:
     using reference = type&;
     using const_pointer = const type*;
     using const_reference = const type&;
+    using iterator = random_access_iterator<type>;
+    using const_iterator = const_random_access_iterator<type>;
 
     static constexpr size_t type_size = sizeof(type);
 
@@ -25,6 +28,13 @@ public:
     constexpr span& operator=(span&&) noexcept = default;
 
     constexpr explicit operator bool() const noexcept { return m_ptr != nullptr; }
+
+    const_iterator cbegin() const { return const_iterator(m_ptr); }
+    const_iterator begin() const { return const_iterator(m_ptr); }
+    iterator begin() { return iterator(m_ptr); }
+    const_iterator cend() const { return const_iterator(m_ptr + m_size); }
+    const_iterator end() const { return const_iterator(m_ptr + m_size); }
+    iterator end() { return iterator(m_ptr + m_size); }
 
     [[nodiscard]] constexpr const_pointer data(const size_t offset=0) const noexcept { if (offset >= m_size) { catastrophic_error("out of span size"); } return m_ptr + offset; }
     [[nodiscard]] constexpr pointer data(const size_t offset=0) noexcept { if (offset >= m_size) { catastrophic_error("out of span size"); } return m_ptr + offset; }

@@ -14,13 +14,13 @@ template<typename t_>
 struct optional_storage {
     using type = t_;
 
-    optional_storage();
-    constexpr optional_storage(const optional_storage&) = default;
-    constexpr optional_storage(optional_storage&&) = default;
-    ~optional_storage();
+    constexpr optional_storage();
+    constexpr optional_storage(const optional_storage&);
+    constexpr optional_storage(optional_storage&&) noexcept;
+    constexpr ~optional_storage();
 
-    constexpr optional_storage& operator=(const optional_storage&) = default;
-    constexpr optional_storage& operator=(optional_storage&&) = default;
+    constexpr optional_storage& operator=(const optional_storage&);
+    constexpr optional_storage& operator=(optional_storage&&) noexcept;
 
     void reset();
 
@@ -93,14 +93,56 @@ private:
 };
 
 template<typename t_>
-optional_storage<t_>::optional_storage()
+constexpr optional_storage<t_>::optional_storage()
     : has_value(false)
     , dummy(0)
 {}
 
 template<typename t_>
-optional_storage<t_>::~optional_storage() {
+constexpr optional_storage<t_>::optional_storage(const optional_storage& other)
+    : has_value(other.has_value)
+    , dummy(0) {
+    if (has_value) {
+        new (&value) type(other.value);
+    }
+}
+
+template<typename t_>
+constexpr optional_storage<t_>::optional_storage(optional_storage&& other) noexcept
+    : has_value(other.has_value)
+    , dummy(0) {
+    if (has_value) {
+        new (&value) type(framework::move(other.value));
+    }
+}
+
+template<typename t_>
+constexpr optional_storage<t_>::~optional_storage() {
     reset();
+}
+
+template<typename t_>
+constexpr optional_storage<t_>& optional_storage<t_>::operator=(const optional_storage& other) {
+    reset();
+
+    has_value = other.has_value;
+    if (has_value) {
+        new (&value) type(other.value);
+    }
+
+    return *this;
+}
+
+template<typename t_>
+constexpr optional_storage<t_>& optional_storage<t_>::operator=(optional_storage&& other) noexcept {
+    reset();
+
+    has_value = other.has_value;
+    if (has_value) {
+        new (&value) type(framework::move(other.value));
+    }
+
+    return *this;
 }
 
 template<typename t_>

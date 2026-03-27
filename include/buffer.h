@@ -133,13 +133,13 @@ template<memory_type mem_t_>
 template<size_t align_>
 result<> buffer_base<mem_t_>::resize(const size_t new_size) {
     auto* old_ptr = m_ptr.release();
-    if (auto result = framework::reallocate(old_ptr, new_size, mem_t_, align_)) {
+    if (auto result = reallocate(old_ptr, new_size, mem_t_, align_)) {
         m_ptr = static_cast<uint8_t*>(result.release_value());
         m_size = new_size;
         return {};
     } else {
         m_ptr = old_ptr;
-        return framework::err(result.release_error());
+        return err(result.release_error());
     }
 }
 

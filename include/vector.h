@@ -4,6 +4,7 @@
 #include "result.h"
 #include "math.h"
 #include "verify.h"
+#include "iterator.h"
 
 namespace framework {
 
@@ -17,40 +18,8 @@ public:
     using reference = type&;
     using const_pointer = const type*;
     using const_reference = const type&;
-
-    class iterator {
-    public:
-        explicit iterator(pointer ptr);
-
-        iterator& operator++();
-        iterator& operator--();
-
-        reference operator*();
-        pointer operator->();
-
-        bool operator==(const iterator& rhs) const;
-        bool operator!=(const iterator& rhs) const;
-
-    private:
-        pointer m_ptr;
-    };
-
-    class const_iterator {
-    public:
-        explicit const_iterator(const_pointer ptr);
-
-        const_iterator& operator++();
-        const_iterator& operator--();
-
-        const_reference operator*();
-        const_pointer operator->();
-
-        bool operator==(const const_iterator& rhs) const;
-        bool operator!=(const const_iterator& rhs) const;
-
-    private:
-        const_pointer m_ptr;
-    };
+    using iterator = random_access_iterator<type>;
+    using const_iterator = const_random_access_iterator<type>;
 
     vector();
     vector(const vector&) = delete;
@@ -116,80 +85,6 @@ private:
     size_t m_size;
     size_t m_capacity;
 };
-
-template<typename t_>
-vector<t_>::iterator::iterator(pointer ptr)
-    : m_ptr(ptr)
-{}
-
-template<typename t_>
-vector<t_>::iterator& vector<t_>::iterator::operator++() {
-    ++m_ptr;
-    return *this;
-}
-
-template<typename t_>
-vector<t_>::iterator& vector<t_>::iterator::operator--() {
-    --m_ptr;
-    return *this;
-}
-
-template<typename t_>
-vector<t_>::reference vector<t_>::iterator::operator*() {
-    return *m_ptr;
-}
-
-template<typename t_>
-vector<t_>::pointer vector<t_>::iterator::operator->() {
-    return m_ptr;
-}
-
-template<typename t_>
-bool vector<t_>::iterator::operator==(const iterator& rhs) const {
-    return m_ptr == rhs.m_ptr;
-}
-
-template<typename t_>
-bool vector<t_>::iterator::operator!=(const iterator& rhs) const {
-    return m_ptr != rhs.m_ptr;
-}
-
-template<typename t_>
-vector<t_>::const_iterator::const_iterator(const_pointer ptr)
-    : m_ptr(ptr)
-{}
-
-template<typename t_>
-vector<t_>::const_iterator& vector<t_>::const_iterator::operator++() {
-    ++m_ptr;
-    return *this;
-}
-
-template<typename t_>
-vector<t_>::const_iterator& vector<t_>::const_iterator::operator--() {
-    --m_ptr;
-    return *this;
-}
-
-template<typename t_>
-vector<t_>::const_reference vector<t_>::const_iterator::operator*() {
-    return *m_ptr;
-}
-
-template<typename t_>
-vector<t_>::const_pointer vector<t_>::const_iterator::operator->() {
-    return m_ptr;
-}
-
-template<typename t_>
-bool vector<t_>::const_iterator::operator==(const const_iterator& rhs) const {
-    return m_ptr == rhs.m_ptr;
-}
-
-template<typename t_>
-bool vector<t_>::const_iterator::operator!=(const const_iterator& rhs) const {
-    return m_ptr != rhs.m_ptr;
-}
 
 template<typename t_>
 vector<t_>::vector()

@@ -38,9 +38,15 @@ namespace framework {
 int memcmp(const void* s1, const void* s2, size_t size);
 void* memset(void* dest, int value, size_t size);
 void* memcpy(void* dest, const void* src, size_t size);
+
 size_t strlen(const char* s);
+size_t strlen_s(const char* s, size_t max);
 int strcmp(const char* s1, const char* s2);
 const char* strchr(const char* str, int ch);
 const char* strrchr(const char* str, int ch);
+
+size_t wcstrlen(const wchar_t* s);
+size_t wcstrlen_s(const wchar_t* s, size_t max);
+int wcstrcmp(const wchar_t* s1, const wchar_t* s2);
 
 }

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "intrinsin.h"
-#include "types.h"
 #include "span.h"
 #include "terminate.h"
+#include "iterator.h"
 
 namespace framework {
 
@@ -37,6 +37,8 @@ public:
     using pointer = type*;
     using reference = type&;
     using span = span<type>;
+    using iterator = random_access_iterator<type>;
+    using const_iterator = const_random_access_iterator<type>;
 
     static constexpr size_t type_size = sizeof(type);
 
@@ -46,6 +48,13 @@ public:
 
     constexpr array& operator=(const array&) noexcept = default;
     constexpr array& operator=(array&&) noexcept = default;
+
+    const_iterator cbegin() const { return const_iterator(m_base); }
+    const_iterator begin() const { return const_iterator(m_base); }
+    iterator begin() { return iterator(m_base); }
+    const_iterator cend() const { return const_iterator(m_base + size_); }
+    const_iterator end() const { return const_iterator(m_base + size_); }
+    iterator end() { return iterator(m_base + size_); }
 
     [[nodiscard]] constexpr const_pointer data(const size_t offset=0) const noexcept { if (offset >= size_) { catastrophic_error("out of array size"); } return m_base + offset; }
     [[nodiscard]] constexpr pointer data(const size_t offset=0) noexcept { if (offset >= size_) { catastrophic_error("out of array size"); } return m_base + offset; }

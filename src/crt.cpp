@@ -48,6 +48,10 @@ void operator delete(void* memory, std::align_val_t) noexcept {
     operator delete(memory);
 }
 
+void operator delete(void* memory, size_t) noexcept {
+    operator delete(memory);
+}
+
 void operator delete[](void* memory) noexcept {
     operator delete(memory);
 }

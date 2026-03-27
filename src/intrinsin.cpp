@@ -39,6 +39,17 @@ size_t strlen(const char* s) {
     return count;
 }
 
+size_t strlen_s(const char* s, size_t max) {
+    size_t count = 0;
+    while (*s && max > 0) {
+        ++count;
+        ++(s);
+        --max;
+    }
+
+    return count;
+}
+
 int strcmp(const char* s1, const char* s2) {
     while (*s1) {
         if (*s1 != *s2) {
@@ -74,6 +85,38 @@ const char* strrchr(const char* str, const int ch) {
     }
 
     return str;
+}
+
+size_t wcstrlen(const wchar_t* s) {
+    size_t count = 0;
+    while (*s) {
+        ++count;
+        ++(s);
+    }
+
+    return count;
+}
+
+size_t wcstrlen_s(const wchar_t* s, size_t max) {
+    size_t count = 0;
+    while (*s && max > 0) {
+        ++count;
+        ++(s);
+        --max;
+    }
+
+    return count;
+}
+
+int wcstrcmp(const wchar_t* s1, const wchar_t* s2) {
+    while (*s1) {
+        if (*s1 != *s2) {
+            break;
+        }
+        ++(s1);
+        ++(s2);
+    }
+    return *s1 - *s2;
 }
 
 }
