@@ -143,6 +143,18 @@ struct is_floating_point : is_floating_point_helper<remove_cv_t<t_>> {};
 template<typename t_>
 inline constexpr bool is_floating_point_v = is_floating_point<t_>::value;
 
+template<typename t_>
+struct is_reference : false_type {};
+
+template<typename t_>
+struct is_reference<t_&> : true_type {};
+
+template<typename t_>
+struct is_reference<t_&&> : true_type {};
+
+template<typename t_>
+inline constexpr bool is_reference_v = is_reference<t_>::value;
+
 template<typename t_, class... _args>
 inline constexpr bool is_constructible_v = __is_constructible(t_, _args...);
 template<typename t_>

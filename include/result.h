@@ -4,6 +4,7 @@
 #include "optional.h"
 #include "status.h"
 #include "terminate.h"
+#include "ref.h"
 
 namespace framework {
 
@@ -16,6 +17,17 @@ public:
 
 private:
     t_ m_value;
+};
+
+template<typename t_>
+class ok<const t_&> {
+public:
+    explicit constexpr ok(const t_& value);
+
+    constexpr const t_& value();
+
+private:
+    const t_& m_value;
 };
 
 template<not_trivially_copyable t_>
@@ -71,12 +83,27 @@ private:
     status m_value;
 };
 
+template<typename t_>
+struct result_storage_traits {
+    using type = t_;
+    using const_reference = const t_&;
+};
+
+template<typename t_>
+struct result_storage_traits<const t_&> {
+    using type = reference_wrapper<const t_>;
+    using const_reference = const t_&;
+};
+
 template<typename value_t_, typename err_t_>
 class result_base {
 public:
     using value_type = value_t_;
     using ok_type = ok<value_t_>;
     using err_type = err<err_t_>;
+    using storage_traits = result_storage_traits<value_t_>;
+
+    using value_const_reference = storage_traits::const_reference;
 
     // ReSharper disable once CppNonExplicitConvertingConstructor
     constexpr result_base(ok_type&& value); // NOLINT(*-explicit-constructor)
@@ -91,14 +118,14 @@ public:
     [[nodiscard]] constexpr bool is_success() const;
     [[nodiscard]] constexpr bool is_error() const;
 
-    [[nodiscard]] constexpr const value_t_& value() const;
+    [[nodiscard]] constexpr value_const_reference value() const;
     [[nodiscard]] constexpr const err_t_& error() const;
 
-    [[nodiscard]] constexpr value_t_&& release_value();
+    [[nodiscard]] constexpr value_t_&& release_value() requires(!is_reference_v<value_t_>);
     [[nodiscard]] constexpr err_t_&& release_error();
 
 private:
-    optional<value_t_> m_value;
+    optional<typename storage_traits::type> m_value;
     optional<err_t_> m_err;
 };
 
@@ -140,6 +167,16 @@ constexpr ok<t_>::ok(t_ value)
 
 template<typename t_>
 constexpr t_ ok<t_>::value() {
+    return m_value;
+}
+
+template<typename t_>
+constexpr ok<const t_&>::ok(const t_& value)
+    : m_value(value)
+{}
+
+template<typename t_>
+constexpr const t_& ok<const t_&>::value() {
     return m_value;
 }
 
@@ -210,9 +247,13 @@ constexpr bool result_base<value_t_, err_t_>::is_error() const {
 }
 
 template<typename value_t_, typename err_t_>
-constexpr const value_t_& result_base<value_t_, err_t_>::value() const {
+constexpr result_base<value_t_, err_t_>::value_const_reference result_base<value_t_, err_t_>::value() const {
     if (!m_value) { catastrophic_error("result has no value"); }
-    return m_value.value();
+    if constexpr (is_reference_v<value_t_>) {
+        return m_value.value().get();
+    } else {
+        return m_value.value();
+    }
 }
 
 template<typename value_t_, typename err_t_>
@@ -222,7 +263,7 @@ constexpr const err_t_& result_base<value_t_, err_t_>::error() const {
 }
 
 template<typename value_t_, typename err_t_>
-constexpr value_t_&& result_base<value_t_, err_t_>::release_value() {
+constexpr value_t_&& result_base<value_t_, err_t_>::release_value() requires(!is_reference_v<value_t_>) {
     if (!m_value) { catastrophic_error("result has no value"); }
     return framework::move(*m_value);
 }
