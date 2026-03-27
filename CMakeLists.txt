@@ -34,6 +34,7 @@ set(SOURCES
         src/intrinsin.cpp
         src/lock.cpp
         src/atomic.cpp
+        include/iterator.h
 )
 
 add_library(ministl STATIC ${SOURCES})
