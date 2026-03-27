@@ -53,19 +53,19 @@ public:
     void clear();
 
     template<size_t align_ = default_alignment>
-    result<> resize(size_t new_size);
+    [[nodiscard]] result<> resize(size_t new_size);
 
     template<size_t align_ = default_alignment>
-    result<buffer_base> copy() const;
+    [[nodiscard]] result<buffer_base> copy() const;
     template<size_t align_ = default_alignment>
-    result<buffer_base> sub(size_t offset, size_t size) const;
+    [[nodiscard]] result<buffer_base> sub(size_t offset, size_t size) const;
 
     template<size_t align_ = default_alignment>
-    static result<buffer_base> create(size_t size);
+    [[nodiscard]] static result<buffer_base> create(size_t size);
     template<typename t_, size_t align_ = default_alignment>
-    static result<buffer_base> from(span<t_>);
+    [[nodiscard]] static result<buffer_base> from(span<t_>);
     template<typename t_, size_t align_ = default_alignment>
-    static result<buffer_base> from(span<const t_>);
+    [[nodiscard]] static result<buffer_base> from(span<const t_>);
 
 private:
     [[nodiscard]] const type* _get() const { return m_ptr.get(); }

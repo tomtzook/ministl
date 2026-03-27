@@ -23,6 +23,9 @@ set(SOURCES
         include/span.h
         include/array.h
         include/intrinsin.h
+        include/math.h
+        include/vector.h
+        include/str.h
 
         src/empty.cpp
         src/crt.cpp
@@ -31,9 +34,6 @@ set(SOURCES
         src/intrinsin.cpp
         src/lock.cpp
         src/atomic.cpp
-        include/math.h
-        include/vector.h
-        include/string.h
 )
 
 add_library(ministl STATIC ${SOURCES})
@@ -82,7 +82,8 @@ if (DEFINED MINISTL_UNIT_TESTS)
             tests/test_buffer.cpp
             tests/test_atomic.cpp
             tests/test_lock.cpp
-            tests/test_vector.cpp)
+            tests/test_vector.cpp
+            tests/test_string.cpp)
     target_link_libraries(tests PRIVATE GTest::gtest_main ministl)
 
     #gtest_discover_tests(tests)

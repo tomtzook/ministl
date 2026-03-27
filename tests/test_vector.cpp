@@ -33,7 +33,7 @@ TEST(TestVector, test_trivial_add_back_copy) {
     trivial_dummy_struct s{};
     s.i = 1;
     s.f = 2.0f;
-    v.push_back(s);
+    EXPECT_TRUE(v.push_back(s));
 
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
@@ -49,7 +49,7 @@ TEST(TestVector, test_trivial_add_back_move) {
     trivial_dummy_struct s{};
     s.i = 1;
     s.f = 2.0f;
-    v.push_back(framework::move(s));
+    EXPECT_TRUE(v.push_back(framework::move(s)));
 
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
@@ -65,7 +65,7 @@ TEST(TestVector, test_trivial_remove_back_one_element) {
     trivial_dummy_struct s{};
     s.i = 1;
     s.f = 2.0f;
-    v.push_back(framework::move(s));
+    EXPECT_TRUE(v.push_back(framework::move(s)));
 
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
@@ -74,7 +74,7 @@ TEST(TestVector, test_trivial_remove_back_one_element) {
     EXPECT_EQ(val.i, 1);
     EXPECT_EQ(val.f, 2.0f);
 
-    v.pop_back();
+    EXPECT_TRUE(v.pop_back());
 
     EXPECT_EQ(v.size(), 0);
     EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
@@ -86,12 +86,12 @@ TEST(TestVector, test_trivial_remove_front_two_elements) {
     trivial_dummy_struct s{};
     s.i = 1;
     s.f = 2.0f;
-    v.push_back(framework::move(s));
+    EXPECT_TRUE(v.push_back(framework::move(s)));
 
     trivial_dummy_struct s2{};
     s2.i = 5;
     s2.f = 8.0f;
-    v.push_back(framework::move(s2));
+    EXPECT_TRUE(v.push_back(framework::move(s2)));
 
     EXPECT_EQ(v.size(), 2);
     EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
@@ -103,7 +103,7 @@ TEST(TestVector, test_trivial_remove_front_two_elements) {
     EXPECT_EQ(val2.i, 5);
     EXPECT_EQ(val2.f, 8.0f);
 
-    v.pop_front();
+    EXPECT_TRUE(v.pop_front());
 
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
@@ -119,7 +119,7 @@ TEST(TestVector, test_trivial_add_front_alread_has) {
     trivial_dummy_struct s{};
     s.i = 1;
     s.f = 2.0f;
-    v.push_back(framework::move(s));
+    EXPECT_TRUE(v.push_back(framework::move(s)));
 
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
@@ -131,7 +131,7 @@ TEST(TestVector, test_trivial_add_front_alread_has) {
     trivial_dummy_struct s2{};
     s2.i = 5;
     s2.f = 8.0f;
-    v.push_front(framework::move(s2));
+    EXPECT_TRUE(v.push_front(framework::move(s2)));
 
     EXPECT_EQ(v.size(), 2);
     EXPECT_EQ(v.capacity(), framework::vector<trivial_dummy_struct>::default_capacity);
@@ -145,12 +145,13 @@ TEST(TestVector, test_trivial_add_front_alread_has) {
 }
 
 TEST(TestVector, test_trivial_increase_capacity) {
-    framework::vector<trivial_dummy_struct> v(1);
+    framework::vector<trivial_dummy_struct> v;
+    EXPECT_TRUE(v.reserve(1));
 
     trivial_dummy_struct s{};
     s.i = 1;
     s.f = 2.0f;
-    v.push_back(framework::move(s));
+    EXPECT_TRUE(v.push_back(framework::move(s)));
 
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), 1);
@@ -159,7 +160,7 @@ TEST(TestVector, test_trivial_increase_capacity) {
     EXPECT_EQ(val.i, 1);
     EXPECT_EQ(val.f, 2.0f);
 
-    v.reserve(2);
+    EXPECT_TRUE(v.reserve(2));
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), 2);
 
@@ -172,7 +173,7 @@ TEST(TestVector, test_nontrivial_add_back_copy) {
     framework::vector<nontrivial_dummy_struct> v;
 
     nontrivial_dummy_struct s;
-    v.push_back(s);
+    EXPECT_TRUE(v.push_back(s));
 
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), framework::vector<nontrivial_dummy_struct>::default_capacity);
@@ -186,7 +187,7 @@ TEST(TestVector, test_nontrivial_add_back_move) {
     framework::vector<nontrivial_dummy_struct> v;
 
     nontrivial_dummy_struct s;
-    v.push_back(framework::move(s));
+    EXPECT_TRUE(v.push_back(framework::move(s)));
 
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), framework::vector<nontrivial_dummy_struct>::default_capacity);
@@ -197,10 +198,11 @@ TEST(TestVector, test_nontrivial_add_back_move) {
 }
 
 TEST(TestVector, test_nontrivial_increase_capacity) {
-    framework::vector<nontrivial_dummy_struct> v(1);
+    framework::vector<nontrivial_dummy_struct> v;
+    EXPECT_TRUE(v.reserve(1));
 
     nontrivial_dummy_struct s;
-    v.push_back(framework::move(s));
+    EXPECT_TRUE(v.push_back(framework::move(s)));
 
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), 1);
@@ -209,7 +211,7 @@ TEST(TestVector, test_nontrivial_increase_capacity) {
     EXPECT_EQ(val.i, 3);
     EXPECT_EQ(val.f, 4.0f);
 
-    v.reserve(2);
+    EXPECT_TRUE(v.reserve(2));
     EXPECT_EQ(v.size(), 1);
     EXPECT_EQ(v.capacity(), 2);
 

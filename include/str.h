@@ -20,8 +20,10 @@ public:
     using type = t_;
 
     string_view_base();
-    string_view_base(const type*);
-    string_view_base(const string_base<type>&);
+    // ReSharper disable once CppNonExplicitConvertingConstructor
+    string_view_base(const type*); // NOLINT(*-explicit-constructor)
+    // ReSharper disable once CppNonExplicitConvertingConstructor
+    string_view_base(const string_base<type>&); // NOLINT(*-explicit-constructor)
     string_view_base(const string_view_base&);
     string_view_base(string_view_base&&) noexcept;
 
@@ -63,6 +65,8 @@ public:
     [[nodiscard]] bool operator>(const string_base&) const;
     [[nodiscard]] bool operator<(const string_base&) const;
 
+    [[nodiscard]] operator bool() const;
+
     size_t find(type ch) const;
     size_t find_last(type ch) const;
 
@@ -70,19 +74,21 @@ public:
     [[nodiscard]] const type* c_str() const;
     [[nodiscard]] type* c_str();
 
-    result<> set(const type*);
-    result<> set(const string_view_base<type>&);
-    result<> set(const string_base&);
-    result<> reserve(size_t);
+    [[nodiscard]] result<> set(const type*);
+    [[nodiscard]] result<> set(const string_view_base<type>&);
+    [[nodiscard]] result<> set(const string_base&);
+    [[nodiscard]] result<> reserve(size_t);
     void clear();
 
-    result<string_base> substr(size_t start, size_t end) const;
+    [[nodiscard]] result<string_base> substr(size_t start, size_t end) const;
 
-    static result<string_base> from(const type*);
-    static result<string_base> from(const string_view_base<type>&);
-    static result<string_base> from(const string_base&);
+    [[nodiscard]] static result<string_base> from(const type*);
+    [[nodiscard]] static result<string_base> from(const string_view_base<type>&);
+    [[nodiscard]] static result<string_base> from(const string_base&);
 
 private:
+    [[nodiscard]] result<> set(const type*, size_t);
+    [[nodiscard]] result<> ensure_capacity(size_t);
     void destroy();
 
     type* m_data;
@@ -178,9 +184,15 @@ string_base<t_>::string_base()
 
 template<char_type t_>
 string_base<t_>::string_base(string_base&& other) noexcept
-    : m_data(other.m_data)
+    : m_data()
     , m_length(other.m_length)
-    , m{} {
+    , m(other.m) {
+    if (other.m_data == other.m.storage) {
+        m_data = m.storage;
+    } else {
+        m_data = other.m_data;
+    }
+
     other.m_data = nullptr;
     other.m_length = 0;
     other.m = {};
@@ -193,9 +205,16 @@ string_base<t_>::~string_base() {
 
 template<char_type t_>
 string_base<t_>& string_base<t_>::operator=(string_base&& other) noexcept {
-    m_data = other.m_data;
+    m_data = nullptr;
     m_length = other.m_length;
     m = other.m;
+
+    if (other.m_data == other.m.storage) {
+        m_data = m.storage;
+    } else {
+        m_data = other.m_data;
+    }
+
     other.m_data = nullptr;
     other.m_length = 0;
     other.m = {};
@@ -245,6 +264,11 @@ bool string_base<t_>::operator<(const string_base& other) const {
 }
 
 template<char_type t_>
+string_base<t_>::operator bool() const {
+    return m_length > 0;
+}
+
+template<char_type t_>
 size_t string_base<t_>::find(const type ch) const {
     for (int i = 0; i < m_length; i++) {
         if (m_data[i] == ch) {
@@ -283,19 +307,8 @@ string_base<t_>::type* string_base<t_>::c_str() {
 
 template<char_type t_>
 result<> string_base<t_>::set(const type* raw_str) {
-    const auto len = strlen(raw_str);
-    if (len < 1) {
-        clear();
-        return {};
-    }
-
-    verify(reserve(len));
-    m_length = len;
-
-    memcpy(m_data, raw_str, m_length);
-    m_data[m_length] = '\0';
-
-    return {};
+    const auto length = strlen(raw_str);
+    return set(raw_str, length);
 }
 
 template<char_type t_>
@@ -315,26 +328,7 @@ result<> string_base<t_>::set(const string_base& other) {
 
 template<char_type t_>
 result<> string_base<t_>::reserve(const size_t length) {
-    const auto actual_length = length + 1;
-
-    if (actual_length <= inline_storage_size && (!m_data || m_data == m.storage)) {
-        m_data = m.storage;
-    } else if (length > m.m_capacity) {
-        auto* new_data = new type[actual_length];
-        verify_alloc(new_data);
-
-        if (m_data) {
-            delete m_data;
-        }
-
-        m_data = new_data;
-        m.m_capacity = length;
-    }
-
-    m_length = 0;
-    m_data[0] = '\0';
-
-    return {};
+    return ensure_capacity(length);
 }
 
 template<char_type t_>
@@ -382,9 +376,59 @@ result<string_base<t_>> string_base<t_>::from(const string_base& other) {
 }
 
 template<char_type t_>
+result<> string_base<t_>::set(const type* data, const size_t length) {
+    if (length < 1) {
+        clear();
+        return {};
+    }
+
+    verify(ensure_capacity(length + 1));
+    memcpy(m_data, data, length);
+    m_data[length] = '\0';
+
+    m_length = length;
+
+    return {};
+}
+
+template<char_type t_>
+result<> string_base<t_>::ensure_capacity(const size_t capacity) {
+    const auto actual_capacity = capacity + 1;
+    if (actual_capacity <= inline_storage_size && m_data != m.storage) {
+        if (m_data) {
+            const auto* last_data = m_data;
+            m_data = m.storage;
+            memcmp(m_data, last_data, m_length + 1);
+
+            delete m_data;
+        } else {
+            m_data = m.storage;
+        }
+    } else if (capacity > m.m_capacity) {
+        auto* new_data = new type[actual_capacity];
+        verify_alloc(new_data);
+
+        if (m_data && m_data != m.storage) {
+            delete m_data;
+        }
+
+        m_data = new_data;
+        m.m_capacity = capacity;
+    }
+
+    m_length = 0;
+    m_data[0] = '\0';
+
+    return {};
+}
+
+template<char_type t_>
 void string_base<t_>::destroy() {
     if (m_data) {
-        delete m_data;
+        if (m_data != m.storage) {
+            delete m_data;
+        }
+
         m_data = nullptr;
         m_length = 0;
         m.m_capacity = 0;
