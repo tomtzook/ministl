@@ -190,6 +190,8 @@ struct atomic_flag {
     atomic_flag& operator=(const atomic_flag&) = delete;
     atomic_flag& operator=(atomic_flag&&) = default;
 
+    [[nodiscard]] bool test(atomic_memory_order order = atomic_memory_order::seq_cst) const noexcept;
+    [[nodiscard]] bool test(atomic_memory_order order = atomic_memory_order::seq_cst) const volatile noexcept;
     [[nodiscard]] bool test_and_set(atomic_memory_order order = atomic_memory_order::seq_cst) noexcept;
     [[nodiscard]] bool test_and_set(atomic_memory_order order = atomic_memory_order::seq_cst) volatile noexcept;
     void clear(atomic_memory_order order = atomic_memory_order::seq_cst) noexcept;

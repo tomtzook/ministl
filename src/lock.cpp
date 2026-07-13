@@ -5,8 +5,14 @@
 namespace framework {
 
 void spin_lock::lock() noexcept {
-    while (m_flag.test_and_set(atomic_memory_order::acquire)) {
-        _ministl_builtin_pause();
+    while (true) {
+        if (m_flag.test_and_set(atomic_memory_order::acquire)) {
+            return;
+        }
+
+        while (m_flag.test(atomic_memory_order::relaxed)) {
+            _ministl_builtin_pause();
+        }
     }
 }
 

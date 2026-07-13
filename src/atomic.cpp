@@ -3,6 +3,14 @@
 
 namespace framework {
 
+bool atomic_flag::test(const atomic_memory_order order) const noexcept {
+    return m_flag.load(order);
+}
+
+bool atomic_flag::test(const atomic_memory_order order) const volatile noexcept {
+    return m_flag.load(order);
+}
+
 bool atomic_flag::test_and_set(const atomic_memory_order order) noexcept {
     bool expected = false;
     return m_flag.compare_exchange(expected, true, order);
